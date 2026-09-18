@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "ZoneCam Field",
+    "slug": "zonecam-field",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "ZoneCam uses the camera to document job sites.",
+        "NSMicrophoneUsageDescription": "ZoneCam uses the microphone when recording job-site video.",
+        "NSLocationWhenInUseUsageDescription": "ZoneCam can attach the job location to a photo when you allow it. Location is not tracked continuously."
+      }
+    },
+    "android": {
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-secure-store",
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Attach this photo’s location to the job record. ZoneCam does not track you in the background."
+        }
+      ],
+      "expo-asset",
+      "expo-font"
+    ]
+  }
+}
