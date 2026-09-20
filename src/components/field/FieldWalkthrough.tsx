@@ -330,7 +330,7 @@ export function FieldWalkthrough({ projectId }: { projectId: string }) {
     setStatus("Review the voice notes, then send them to the office.");
   }
 
-  async function useSavedVideo(file: File) {
+  async function loadSavedVideo(file: File) {
     setStatus("Reading video and pulling screenshots…");
     try {
       const { shots: extracted, durationMs } = await framesFromFile(file, []);
@@ -480,7 +480,7 @@ export function FieldWalkthrough({ projectId }: { projectId: string }) {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 e.target.value = "";
-                if (file) void useSavedVideo(file);
+                if (file) void loadSavedVideo(file);
               }}
             />
           </div>
