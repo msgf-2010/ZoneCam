@@ -37,7 +37,7 @@ export function ProjectRow({
   return (
     <Link
       href={`/projects/${project.id}`}
-      className="flex flex-col gap-2 border-b border-[var(--line)] py-3 sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col gap-2 border-b border-[var(--line)] py-3 last:border-0 hover:bg-[#fafafa] sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="flex min-w-0 items-center gap-3">
         {thumbs.length > 0 ? (
@@ -82,7 +82,7 @@ export function PageHeader({
   return (
     <div className={cn("mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between")}>
       <div>
-        <h1 className="text-2xl font-semibold">{title}</h1>
+        <h1 className="text-2xl font-bold text-[var(--ink)]">{title}</h1>
         {description ? <p className="mt-1 text-[var(--muted)]">{description}</p> : null}
       </div>
       {action}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireAuth } from "@/server/auth/context";
 import { getDashboard } from "@/server/services/project-service";
 import { listOutstandingTasks } from "@/server/services/task-service";
-import { Card } from "@/components/ui/Card";
+import { Card, StatCard } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PageHeader, ProjectRow } from "@/components/ProjectRow";
 
@@ -25,22 +25,10 @@ export default async function DashboardPage() {
         }
       />
       <div className="grid gap-4 sm:grid-cols-4">
-        <Card>
-          <div className="text-sm text-[var(--muted)]">Active jobs</div>
-          <div className="mt-2 text-3xl font-semibold">{data.stats.activeProjects}</div>
-        </Card>
-        <Card>
-          <div className="text-sm text-[var(--muted)]">Today</div>
-          <div className="mt-2 text-3xl font-semibold">{data.stats.today}</div>
-        </Card>
-        <Card>
-          <div className="text-sm text-[var(--muted)]">Needs attention</div>
-          <div className="mt-2 text-3xl font-semibold">{data.stats.attention}</div>
-        </Card>
-        <Card>
-          <div className="text-sm text-[var(--muted)]">Team</div>
-          <div className="mt-2 text-3xl font-semibold">{data.stats.members}</div>
-        </Card>
+        <StatCard label="Active jobs" value={data.stats.activeProjects} />
+        <StatCard label="Today" value={data.stats.today} />
+        <StatCard label="Needs attention" value={data.stats.attention} />
+        <StatCard label="Team" value={data.stats.members} />
       </div>
       <Card title="Today's jobs">
         {data.today.length === 0 ? (

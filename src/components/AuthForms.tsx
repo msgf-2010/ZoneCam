@@ -17,14 +17,14 @@ function AuthFrame({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-white px-4 py-10">
+      <div className="w-full max-w-[400px]">
         <div className="mb-8">
-          <div className="text-xs uppercase tracking-[0.18em] text-[var(--brand)]">ZoneCam</div>
-          <h1 className="mt-2 text-3xl font-semibold">{title}</h1>
-          <p className="mt-2 text-[var(--muted)]">{subtitle}</p>
+          <div className="text-xl font-bold text-[var(--ink)]">ZoneCam</div>
+          <h1 className="mt-6 text-2xl font-bold text-[var(--ink)]">{title}</h1>
+          <p className="mt-2 text-sm text-[var(--muted)]">{subtitle}</p>
         </div>
-        <div className="rounded-[var(--radius)] border border-[var(--line)] bg-[var(--bg-elevated)] p-6">{children}</div>
+        {children}
       </div>
     </div>
   );

@@ -3,6 +3,8 @@ import { searchCompany, hrefForHit } from "@/server/services/search-service";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ProjectRow";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Field";
 import { AppError } from "@/server/http";
 import Link from "next/link";
 
@@ -25,17 +27,16 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     <div className="space-y-6">
       <PageHeader title="Search" description="Jobs, customers, people, photos, notes, tasks, and reports in this company." />
       <form className="flex flex-wrap gap-2">
-        <input
-          name="q"
-          defaultValue={q}
-          minLength={2}
-          maxLength={80}
-          placeholder="Search this company"
-          className="min-h-11 min-w-48 flex-1 rounded-[10px] border border-[var(--line)] bg-white px-3"
-        />
-        <button type="submit" className="min-h-11 rounded-[10px] bg-[var(--brand)] px-4 font-medium text-white">
-          Search
-        </button>
+        <div className="min-w-48 flex-1">
+          <Input
+            name="q"
+            defaultValue={q}
+            minLength={2}
+            maxLength={80}
+            placeholder="Search this company"
+          />
+        </div>
+        <Button type="submit">Search</Button>
       </form>
       {error ? <p className="text-sm text-[var(--danger)]">{error}</p> : null}
       {!q.trim() ? (

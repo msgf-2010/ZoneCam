@@ -61,7 +61,7 @@ export function MessageThread({
       <ul className="max-h-80 space-y-3 overflow-auto">
         {rows.length === 0 ? <li className="text-sm text-[var(--muted)]">No messages on this job yet.</li> : null}
         {rows.map((row) => (
-          <li key={row.id} className="rounded-lg border border-[var(--line)] p-3 text-sm">
+          <li key={row.id} className="rounded-2xl bg-[#f5f5f5] p-3 text-sm">
             <div className="font-medium">
               {row.author ? `${row.author.firstName} ${row.author.lastName}` : "Someone"}
             </div>

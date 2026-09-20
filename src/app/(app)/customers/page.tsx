@@ -34,7 +34,7 @@ export default async function CustomersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-[var(--line)] text-[var(--muted)]">
+                <tr className="border-b border-[var(--line)] bg-[#fafafa] text-[var(--muted)]">
                   <th className="py-2 font-medium">Name</th>
                   <th className="py-2 font-medium">Contact</th>
                   <th className="py-2 font-medium">Jobs</th>

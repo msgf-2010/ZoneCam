@@ -2,6 +2,7 @@ import { requireAuth } from "@/server/auth/context";
 import { listRoles } from "@/server/services/company-service";
 import { listChecklistTemplates } from "@/server/services/checklist-service";
 import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ProjectRow";
 import { CompanySettingsForm, ProfileForm } from "@/components/settings-forms";
 import { TemplateEditor } from "@/components/TaskDetail";
 import { NotificationPrefs } from "@/components/NotificationPrefs";
@@ -18,10 +19,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Settings</h1>
-        <p className="mt-1 text-[var(--muted)]">Account, company, and roles.</p>
-      </div>
+      <PageHeader title="Settings" description="Account, company, and roles." />
       <ProfileForm user={ctx.user} />
       {canSettings ? (
         <CompanySettingsForm company={ctx.company} />
@@ -49,7 +47,7 @@ export default async function SettingsPage() {
       <Card title="Roles" description="Permissions are enforced on the server for every request.">
         <div className="space-y-4">
           {roles.map((role) => (
-            <div key={role.id} className="rounded-lg border border-[var(--line)] p-4">
+            <div key={role.id} className="rounded-2xl border border-[var(--line)] bg-[#fafafa] p-4">
               <div className="font-medium">{role.name}</div>
               <p className="mt-1 text-sm text-[var(--muted)]">{role.description}</p>
               <p className="mt-2 text-xs text-[var(--muted)]">{role.permissions.join(" · ")}</p>

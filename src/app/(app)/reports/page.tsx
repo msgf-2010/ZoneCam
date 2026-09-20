@@ -3,6 +3,7 @@ import { requireAuth } from "@/server/auth/context";
 import { listReports } from "@/server/services/report-service";
 import { listProjects } from "@/server/services/project-service";
 import { Card } from "@/components/ui/Card";
+import { StatusChip } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ProjectRow";
 import { ReportCreateForm } from "@/components/ReportActions";
 
@@ -28,14 +29,17 @@ export default async function ReportsPage() {
         {reports.length === 0 ? (
           <p className="text-sm text-[var(--muted)]">No reports yet.</p>
         ) : (
-          <ul className="divide-y divide-[var(--line)] text-sm">
+          <ul>
             {reports.map((report) => (
-              <li key={report.id} className="flex items-center justify-between py-3">
+              <li key={report.id} className="flex items-center justify-between border-b border-[var(--line)] py-3 last:border-0">
                 <Link href={`/reports/${report.id}`} className="font-medium">
                   {report.title}
                 </Link>
-                <span className="text-[var(--muted)]">
-                  {report.project ? `${report.project.number}` : ""} · {report.status}
+                <span className="flex items-center gap-3 text-[var(--muted)]">
+                  {report.project ? report.project.number : ""}
+                  <StatusChip tone={report.status === "shared" || report.status === "signed" ? "ok" : "neutral"}>
+                    {report.status}
+                  </StatusChip>
                 </span>
               </li>
             ))}

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Field, Input } from "@/components/ui/Field";
+import { Field, Input, Select } from "@/components/ui/Field";
 
 export function PaymentCreateForm({
   projects,
@@ -42,17 +42,13 @@ export function PaymentCreateForm({
   return (
     <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
       <Field label="Job">
-        <select
-          className="w-full rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5"
-          value={projectId}
-          onChange={(e) => setProjectId(e.target.value)}
-        >
+        <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
           {projects.map((job) => (
             <option key={job.id} value={job.id}>
               {job.number} · {job.name}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
       <Field label="Amount (USD)">
         <Input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" placeholder="250.00" required />

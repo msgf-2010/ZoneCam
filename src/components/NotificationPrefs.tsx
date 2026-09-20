@@ -21,7 +21,7 @@ export function NotificationPrefs({
   return (
     <div className="space-y-3 text-sm">
       {rows.map((row) => (
-        <div key={row.eventType} className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] py-2">
+        <div key={row.eventType} className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] py-3 last:border-0">
           <span>{row.label}</span>
           <label className="flex items-center gap-4">
             <span>

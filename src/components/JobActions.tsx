@@ -46,14 +46,14 @@ export function JobActions({
       {!terminal ? (
         <div className="flex flex-wrap gap-2">
           {statusKey !== "in_progress" ? (
-            <Button className="min-h-12 min-w-32" disabled={pending} onClick={() => post(`/api/v1/projects/${projectId}/start`)}>
+            <Button disabled={pending} onClick={() => post(`/api/v1/projects/${projectId}/start`)}>
               Start job
             </Button>
           ) : null}
-          <Button variant="secondary" className="min-h-12" disabled={pending} onClick={() => post(`/api/v1/projects/${projectId}/hold`)}>
+          <Button variant="secondary" disabled={pending} onClick={() => post(`/api/v1/projects/${projectId}/hold`)}>
             On hold
           </Button>
-          <Button variant="secondary" className="min-h-12" disabled={pending} onClick={() => post(`/api/v1/projects/${projectId}/complete`)}>
+          <Button variant="secondary" disabled={pending} onClick={() => post(`/api/v1/projects/${projectId}/complete`)}>
             Complete job
           </Button>
         </div>

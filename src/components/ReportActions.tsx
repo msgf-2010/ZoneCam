@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Field, Input } from "@/components/ui/Field";
+import { Field, Input, Select } from "@/components/ui/Field";
 
 export function ReportCreateForm({
   projects,
@@ -38,17 +38,13 @@ export function ReportCreateForm({
   return (
     <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-3">
       <Field label="Job">
-        <select
-          className="w-full min-w-56 rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5"
-          value={projectId}
-          onChange={(e) => setProjectId(e.target.value)}
-        >
+        <Select className="min-w-56" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
           {projects.map((job) => (
             <option key={job.id} value={job.id}>
               {job.number} · {job.name}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
       <Button type="submit" disabled={pending}>
         {pending ? "Generating…" : "Generate report"}

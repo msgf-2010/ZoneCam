@@ -57,19 +57,26 @@ export function NotificationBell() {
 
   return (
     <div className="relative">
-      <button type="button" className="relative rounded-[10px] border border-[var(--line)] px-3 py-2 text-sm" onClick={() => setOpen((v) => !v)}>
+      <button
+        type="button"
+        className="relative rounded-full p-2 text-sm font-semibold hover:bg-black/5"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Notifications"
+      >
         Inbox
         {count > 0 ? (
-          <span className="ml-2 inline-flex min-w-5 rounded-full bg-[var(--accent)] px-1.5 text-xs text-white">{count}</span>
+          <span className="absolute right-0 top-0 inline-flex min-w-4 rounded-full bg-[var(--danger)] px-1 text-[10px] font-bold text-white">
+            {count}
+          </span>
         ) : null}
       </button>
       {open ? (
-        <div className="absolute right-0 z-20 mt-2 w-80 rounded-[12px] border border-[var(--line)] bg-white p-2 shadow-lg">
-          <div className="mb-2 flex justify-between px-2 text-sm">
-            <span className="font-medium">Notifications</span>
+        <div className="absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-[var(--line)] bg-white p-2">
+          <div className="mb-2 flex justify-between px-2 py-1 text-sm">
+            <span className="font-bold text-[var(--ink)]">Notifications</span>
             <button
               type="button"
-              className="text-[var(--muted)]"
+              className="text-[var(--muted)] hover:text-[var(--brand)]"
               onClick={async () => {
                 await fetch("/api/v1/notifications/read-all", { method: "POST" });
                 void refresh();
@@ -86,13 +93,13 @@ export function NotificationBell() {
                 <li key={item.id}>
                   <Link
                     href={hrefFor(item)}
-                    className={`block rounded-lg px-2 py-2 text-sm ${item.readAt ? "text-[var(--muted)]" : "bg-[#faf7f1]"}`}
+                    className={`block rounded-xl px-2 py-2 text-sm ${item.readAt ? "text-[var(--muted)]" : "bg-[var(--brand-subtle)]"}`}
                     onClick={async () => {
                       await fetch(`/api/v1/notifications/${item.id}/read`, { method: "POST" });
                       setOpen(false);
                     }}
                   >
-                    <div className="font-medium text-[var(--ink)]">{item.title}</div>
+                    <div className="font-semibold text-[var(--ink)]">{item.title}</div>
                     <div className="line-clamp-2">{item.body}</div>
                   </Link>
                 </li>

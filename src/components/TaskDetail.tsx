@@ -116,7 +116,7 @@ export function TemplateEditor({
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-[12px] border border-[var(--line)] p-4">
+    <form onSubmit={onSubmit} className="rounded-2xl border border-[var(--line)] bg-[#fafafa] p-4">
       <Field label="Template name" error={error ?? undefined}>
         <Input value={name} onChange={(e) => setName(e.target.value)} required />
       </Field>

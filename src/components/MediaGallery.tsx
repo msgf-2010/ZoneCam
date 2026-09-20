@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { MediaUploader } from "@/components/MediaUploader";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Input, Select } from "@/components/ui/Field";
 
 type MediaItem = {
   id: string;
@@ -93,21 +94,20 @@ export function MediaGallery({
     <div className="space-y-4">
       {canUpload ? <MediaUploader projectId={projectId} onUploaded={() => load(true)} /> : null}
       <div className="flex flex-wrap gap-2">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search filenames"
-          className="min-h-11 min-w-48 flex-1 rounded-[10px] border border-[var(--line)] bg-white px-3"
-        />
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="min-h-11 rounded-[10px] border border-[var(--line)] bg-white px-3"
-        >
-          <option value="">All media</option>
-          <option value="photo">Photos</option>
-          <option value="video">Videos</option>
-        </select>
+        <div className="min-w-48 flex-1">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search filenames"
+          />
+        </div>
+        <div className="w-36">
+          <Select value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="">All media</option>
+            <option value="photo">Photos</option>
+            <option value="video">Videos</option>
+          </Select>
+        </div>
       </div>
       {items.length === 0 && !loading ? (
         <EmptyState title="No media yet" body="Upload from the web or capture from the ZoneCam mobile app." />
@@ -117,14 +117,14 @@ export function MediaGallery({
             <button
               key={item.id}
               type="button"
-              className="overflow-hidden rounded-[10px] border border-[var(--line)] bg-white text-left"
+              className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white text-left"
               onClick={() => setActive(item)}
             >
               {item.type === "photo" ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={item.urls.thumbnail} alt="" loading="lazy" decoding="async" className="aspect-square w-full object-cover" />
               ) : (
-                <div className="flex aspect-square items-center justify-center bg-[#ece7dc] text-sm">Video</div>
+                <div className="flex aspect-square items-center justify-center bg-[#f5f5f5] text-sm">Video</div>
               )}
               <div className="truncate px-2 py-1 text-xs">{item.originalFilename}</div>
             </button>
@@ -138,7 +138,7 @@ export function MediaGallery({
       ) : null}
       {active ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setActive(null)}>
-          <div className="max-h-[90vh] max-w-4xl overflow-auto rounded-[12px] bg-white p-4" onClick={(e) => e.stopPropagation()}>
+          <div className="max-h-[90vh] max-w-4xl overflow-auto rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
             {active.type === "photo" ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={active.urls.original} alt={active.originalFilename} className="max-h-[70vh] w-full object-contain" />

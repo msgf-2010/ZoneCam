@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { Field, Input, Textarea } from "@/components/ui/Field";
+import { Card } from "@/components/ui/Card";
+import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 
 type CustomerForm = {
   name: string;
@@ -95,7 +96,8 @@ export function CustomerEditor({
   }
 
   return (
-    <form onSubmit={onSubmit} className="max-w-2xl">
+    <Card>
+      <form onSubmit={onSubmit} className="max-w-2xl">
       <Field label="Customer name">
         <Input value={form.name} onChange={(e) => set("name", e.target.value)} required />
       </Field>
@@ -132,7 +134,7 @@ export function CustomerEditor({
       </Field>
       {!customerId ? (
         <>
-          <h2 className="mb-3 mt-6 text-base font-semibold">Primary contact</h2>
+          <h2 className="mb-3 mt-6 text-base font-bold">Primary contact</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="First name">
               <Input value={form.contactFirstName} onChange={(e) => set("contactFirstName", e.target.value)} />
@@ -156,6 +158,7 @@ export function CustomerEditor({
         {pending ? "Saving…" : "Save customer"}
       </Button>
     </form>
+    </Card>
   );
 }
 
@@ -274,7 +277,8 @@ export function ProjectEditor({ projectId }: { projectId?: string }) {
   if (!meta) return <p className="text-sm text-[var(--muted)]">Loading form…</p>;
 
   return (
-    <form onSubmit={onSubmit} className="max-w-3xl">
+    <Card>
+      <form onSubmit={onSubmit} className="max-w-3xl">
       <Field label="Job name">
         <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
       </Field>
@@ -283,8 +287,7 @@ export function ProjectEditor({ projectId }: { projectId?: string }) {
           <Input value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} placeholder="Auto if empty" />
         </Field>
         <Field label="Status">
-          <select
-            className="w-full rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5"
+          <Select
             value={form.projectStatusKey}
             onChange={(e) => setForm({ ...form, projectStatusKey: e.target.value })}
           >
@@ -293,13 +296,12 @@ export function ProjectEditor({ projectId }: { projectId?: string }) {
                 {s.name}
               </option>
             ))}
-          </select>
+          </Select>
         </Field>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Customer">
-          <select
-            className="w-full rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5"
+          <Select
             value={form.customerId}
             onChange={(e) => setForm({ ...form, customerId: e.target.value, customerContactId: "" })}
           >
@@ -309,11 +311,10 @@ export function ProjectEditor({ projectId }: { projectId?: string }) {
                 {c.name}
               </option>
             ))}
-          </select>
+          </Select>
         </Field>
         <Field label="Customer contact">
-          <select
-            className="w-full rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5"
+          <Select
             value={form.customerContactId}
             onChange={(e) => setForm({ ...form, customerContactId: e.target.value })}
           >
@@ -323,22 +324,18 @@ export function ProjectEditor({ projectId }: { projectId?: string }) {
                 {c.firstName} {c.lastName}
               </option>
             ))}
-          </select>
+          </Select>
         </Field>
       </div>
       <Field label="Job type">
-        <select
-          className="w-full rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5"
-          value={form.projectTypeId}
-          onChange={(e) => setForm({ ...form, projectTypeId: e.target.value })}
-        >
+        <Select value={form.projectTypeId} onChange={(e) => setForm({ ...form, projectTypeId: e.target.value })}>
           <option value="">None</option>
           {meta.types.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
       <Field label="Site address">
         <Input value={form.addressLine1} onChange={(e) => setForm({ ...form, addressLine1: e.target.value })} />
@@ -380,10 +377,10 @@ export function ProjectEditor({ projectId }: { projectId?: string }) {
         <Textarea value={form.customerNotes} onChange={(e) => setForm({ ...form, customerNotes: e.target.value })} />
       </Field>
       <fieldset className="mb-4">
-        <legend className="mb-2 text-sm font-medium">Assigned team</legend>
+        <legend className="mb-2 text-sm font-semibold">Assigned team</legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {meta.members.map((m) => (
-            <label key={m.id} className="flex min-h-11 items-center gap-2 rounded-[10px] border border-[var(--line)] bg-white px-3">
+            <label key={m.id} className="flex items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2.5">
               <input type="checkbox" checked={form.memberIds.includes(m.id)} onChange={() => toggleMember(m.id)} />
               {m.firstName} {m.lastName}
             </label>
@@ -395,5 +392,6 @@ export function ProjectEditor({ projectId }: { projectId?: string }) {
         {pending ? "Saving…" : projectId ? "Save job" : "Create job"}
       </Button>
     </form>
+    </Card>
   );
 }

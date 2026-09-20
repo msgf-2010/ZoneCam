@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { Field, Input } from "@/components/ui/Field";
+import { Card } from "@/components/ui/Card";
+import { Field, Input, Select } from "@/components/ui/Field";
 
 export function InviteForm({ roles }: { roles: Array<{ key: string; name: string }> }) {
   const [email, setEmail] = useState("");
@@ -33,31 +34,28 @@ export function InviteForm({ roles }: { roles: Array<{ key: string; name: string
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-[var(--radius)] border border-[var(--line)] bg-[var(--bg-elevated)] p-5">
-      <h2 className="mb-4 text-lg font-semibold">Invite teammate</h2>
-      <div className="grid gap-4 md:grid-cols-[1fr_200px_auto] md:items-end">
-        <Field label="Email" error={error ?? undefined}>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </Field>
-        <Field label="Role">
-          <select
-            className="w-full rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5"
-            value={roleKey}
-            onChange={(e) => setRoleKey(e.target.value)}
-          >
-            {roles.map((role) => (
-              <option key={role.key} value={role.key}>
-                {role.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Button type="submit" disabled={pending} className="mb-4">
-          {pending ? "Sending…" : "Send invite"}
-        </Button>
-      </div>
-      {message ? <p className="text-sm text-[var(--ok)]">{message}</p> : null}
-    </form>
+    <Card title="Invite teammate">
+      <form onSubmit={onSubmit}>
+        <div className="grid gap-4 md:grid-cols-[1fr_200px_auto] md:items-end">
+          <Field label="Email" error={error ?? undefined}>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </Field>
+          <Field label="Role">
+            <Select value={roleKey} onChange={(e) => setRoleKey(e.target.value)}>
+              {roles.map((role) => (
+                <option key={role.key} value={role.key}>
+                  {role.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Button type="submit" disabled={pending} className="mb-4">
+            {pending ? "Sending…" : "Send invite"}
+          </Button>
+        </div>
+        {message ? <p className="text-sm text-[var(--ok)]">{message}</p> : null}
+      </form>
+    </Card>
   );
 }
 
@@ -80,19 +78,20 @@ export function CompanySettingsForm({ company }: { company: { name: string; time
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-[var(--radius)] border border-[var(--line)] bg-[var(--bg-elevated)] p-5">
-      <h2 className="mb-4 text-lg font-semibold">Company</h2>
-      <Field label="Name">
-        <Input value={name} onChange={(e) => setName(e.target.value)} required />
-      </Field>
-      <Field label="Timezone">
-        <Input value={timezone} onChange={(e) => setTimezone(e.target.value)} required />
-      </Field>
-      <Button type="submit" disabled={pending}>
-        Save
-      </Button>
-      {message ? <p className="mt-3 text-sm text-[var(--ok)]">{message}</p> : null}
-    </form>
+    <Card title="Company">
+      <form onSubmit={onSubmit}>
+        <Field label="Name">
+          <Input value={name} onChange={(e) => setName(e.target.value)} required />
+        </Field>
+        <Field label="Timezone">
+          <Input value={timezone} onChange={(e) => setTimezone(e.target.value)} required />
+        </Field>
+        <Button type="submit" disabled={pending}>
+          Save
+        </Button>
+        {message ? <p className="mt-3 text-sm text-[var(--ok)]">{message}</p> : null}
+      </form>
+    </Card>
   );
 }
 
@@ -120,23 +119,23 @@ export function ProfileForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-[var(--radius)] border border-[var(--line)] bg-[var(--bg-elevated)] p-5">
-      <h2 className="mb-4 text-lg font-semibold">Your profile</h2>
-      <p className="mb-4 text-sm text-[var(--muted)]">{user.email}</p>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="First name">
-          <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+    <Card title="Your profile" description={user.email}>
+      <form onSubmit={onSubmit}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="First name">
+            <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+          </Field>
+          <Field label="Last name">
+            <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+          </Field>
+        </div>
+        <Field label="Phone">
+          <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
         </Field>
-        <Field label="Last name">
-          <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-        </Field>
-      </div>
-      <Field label="Phone">
-        <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
-      </Field>
-      <Button type="submit" disabled={pending}>
-        Save profile
-      </Button>
-    </form>
+        <Button type="submit" disabled={pending}>
+          Save profile
+        </Button>
+      </form>
+    </Card>
   );
 }

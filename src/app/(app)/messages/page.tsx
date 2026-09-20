@@ -23,7 +23,7 @@ export default async function MessagesPage({
   return (
     <div className="space-y-6">
       <PageHeader title="Messages" description="Job threads between field and office. Use @First Last to mention someone." />
-      <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+      <div className="grid min-h-[calc(100vh-12rem)] gap-4 lg:grid-cols-[280px_1fr]">
         <Card title="Jobs">
           {jobs.length === 0 ? (
             <p className="text-sm text-[var(--muted)]">Create a job to start a thread.</p>
@@ -33,7 +33,7 @@ export default async function MessagesPage({
                 <li key={job.id}>
                   <Link
                     href={`/messages?project=${job.id}`}
-                    className={`block rounded-lg px-2 py-2 ${job.id === projectId ? "bg-[#faf7f1] font-medium" : ""}`}
+                    className={`block rounded-xl px-3 py-2.5 ${job.id === projectId ? "bg-[var(--brand-subtle)] font-semibold text-[var(--brand)]" : "hover:bg-[#fafafa]"}`}
                   >
                     {job.number} · {job.name}
                   </Link>
