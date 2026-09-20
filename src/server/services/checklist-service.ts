@@ -4,6 +4,7 @@ import type { AuthContext } from "@/server/auth/context";
 import { requirePermission } from "@/server/auth/context";
 import { AppError } from "@/server/http";
 import { recordTimeline } from "@/server/timeline";
+import { signedMediaPath } from "@/server/adapters/storage";
 import { loadScopedProject } from "@/server/tenancy/access";
 
 const DEFAULT_TEMPLATES = [
@@ -102,11 +103,19 @@ export async function updateChecklistTemplate(ctx: AuthContext, id: string, inpu
 export async function listProjectChecklists(ctx: AuthContext, projectId: string) {
   requirePermission(ctx, "tasks.view");
   await loadScopedProject(ctx, projectId);
-  return prisma.checklist.findMany({
+  const lists = await prisma.checklist.findMany({
     where: { companyId: ctx.company.id, projectId, deletedAt: null },
     include: { items: { orderBy: { sortOrder: "asc" } }, template: { select: { id: true, name: true } } },
     orderBy: { createdAt: "desc" },
   });
+  return lists.map((list) => ({
+    ...list,
+    sourceMediaUrl: list.sourceMediaId ? signedMediaPath(list.sourceMediaId, "original") : null,
+    items: list.items.map((item) => ({
+      ...item,
+      screenshotUrl: item.screenshotMediaId ? signedMediaPath(item.screenshotMediaId, "thumbnail") : null,
+    })),
+  }));
 }
 
 export async function applyChecklistTemplate(ctx: AuthContext, projectId: string, templateId: string) {

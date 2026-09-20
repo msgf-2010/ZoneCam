@@ -447,6 +447,123 @@ body {
   overflow: hidden;
 }
 
+.field-walk-cta {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(243, 194, 122, 0.22), rgba(29, 107, 122, 0.35));
+  border: 1px solid rgba(243, 194, 122, 0.35);
+}
+
+.field-walk-cta-kicker {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f3c27a;
+}
+
+.field-walk-cta-title {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.field-walk-cta-hint {
+  color: #d5ddd9;
+  font-size: 14px;
+}
+
+.field-walk-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #031016;
+}
+
+.field-walk-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  background: #031016;
+  border-radius: 22px;
+}
+
+.field-walk-video-review {
+  aspect-ratio: 16 / 10;
+  object-fit: contain;
+  background: #000;
+}
+
+.field-rec-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.field-rec-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 99px;
+  background: #fb7185;
+  box-shadow: 0 0 0 0 rgba(251, 113, 133, 0.7);
+  animation: field-pulse 1.2s ease-out infinite;
+}
+
+@keyframes field-pulse {
+  70% {
+    box-shadow: 0 0 0 8px rgba(251, 113, 133, 0);
+  }
+}
+
+.field-captions {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.62);
+  font-size: 15px;
+}
+
+.field-seg-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.field-seg {
+  display: grid;
+  gap: 6px;
+}
+
+.field-seg-time {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #8fb8b4;
+}
+
+.field-walk-done {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 .field-thumbs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

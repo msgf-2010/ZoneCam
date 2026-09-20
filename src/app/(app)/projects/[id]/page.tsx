@@ -184,7 +184,7 @@ export default async function ProjectDashboardPage({ params }: { params: Promise
           ) : (
             <div className="grid grid-cols-4 gap-2">
               {project.media.map((item) => (
-                <Link key={item.id} href={`/projects/${project.id}/media`} className="block overflow-hidden rounded-md bg-[#ece7dc]">
+                <Link key={item.id} href={`/projects/${project.id}/media`} className="block overflow-hidden rounded-xl bg-[#f5f5f5]">
                   {item.type === "photo" ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -267,7 +267,22 @@ export default async function ProjectDashboardPage({ params }: { params: Promise
       <Card title="Checklists">
         <ChecklistBoard
           projectId={project.id}
-          checklists={project.checklists}
+          checklists={project.checklists.map((list) => ({
+            id: list.id,
+            name: list.name,
+            source: list.source,
+            summary: list.summary,
+            sourceMediaUrl: list.sourceMediaId ? signedMediaPath(list.sourceMediaId, "original") : null,
+            items: list.items.map((item) => ({
+              id: item.id,
+              title: item.title,
+              isComplete: item.isComplete,
+              trade: item.trade,
+              notes: item.notes,
+              timestampMs: item.timestampMs,
+              screenshotUrl: item.screenshotMediaId ? signedMediaPath(item.screenshotMediaId, "thumbnail") : null,
+            })),
+          }))}
           templates={templates.map((t) => ({ id: t.id, name: t.name }))}
           canCreate={ctx.permissions.has("tasks.create")}
           canComplete={ctx.permissions.has("tasks.complete")}

@@ -1,32 +1,23 @@
 import { cn } from "@/lib/cn";
 
+const control =
+  "w-full rounded-xl border border-[#d4d4d4] bg-white px-3 py-2.5 outline-none transition-shadow focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]";
+
 export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      className={cn(
-        "w-full rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5 outline-none focus:border-[var(--brand)]",
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <input className={cn(control, className)} {...props} />;
+}
+
+export function Select({ className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select className={cn(control, className)} {...props} />;
 }
 
 export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      className={cn(
-        "min-h-[96px] w-full rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5 outline-none focus:border-[var(--brand)]",
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <textarea className={cn("min-h-[96px]", control, className)} {...props} />;
 }
 
 export function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
-    <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-medium text-[var(--ink)]">
+    <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-semibold text-[var(--ink)]">
       {children}
     </label>
   );

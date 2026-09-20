@@ -19,6 +19,15 @@ export type ProjectSummaryInput = {
   checklistTotal?: number;
 };
 
+export type WalkthroughAiInput = {
+  jobName?: string;
+  jobType?: string;
+  durationMs?: number;
+  transcript: string;
+  segments: Array<{ startMs: number; endMs: number; text: string; screenshotIndex?: number | null }>;
+  screenshotCount: number;
+};
+
 export interface AiService {
   readonly name: string;
   generateProjectSummary(input: ProjectSummaryInput): Promise<string>;
@@ -26,6 +35,16 @@ export interface AiService {
   generateReport(input: { title: string; summary?: string }): Promise<string>;
   translateText(input: { text: string; targetLocale: string }): Promise<string>;
   generateChecklist(input: { jobType: string }): Promise<string[]>;
+  generateWalkthroughChecklist(input: WalkthroughAiInput): Promise<{
+    summary: string;
+    items: Array<{
+      trade: string;
+      title: string;
+      notes: string;
+      timestampMs: number;
+      screenshotIndex: number | null;
+    }>;
+  }>;
 }
 
 export class UnconfiguredAiService implements AiService {
@@ -47,6 +66,10 @@ export class UnconfiguredAiService implements AiService {
   }
   generateChecklist() {
     return this.fail();
+  }
+  async generateWalkthroughChecklist(input: WalkthroughAiInput) {
+    const { buildWalkthroughChecklist } = await import("@/server/ai/walkthrough");
+    return buildWalkthroughChecklist(input);
   }
 }
 
@@ -91,6 +114,11 @@ export class LocalInspectorAiService implements AiService {
       return ["Photograph wear", "Check fasteners", "Test operation", "Document parts used"];
     }
     return ["Photograph before work", "Photograph progress", "Photograph completed work", "Customer walkthrough"];
+  }
+
+  async generateWalkthroughChecklist(input: WalkthroughAiInput) {
+    const { buildWalkthroughChecklist } = await import("@/server/ai/walkthrough");
+    return buildWalkthroughChecklist(input);
   }
 }
 

@@ -246,7 +246,7 @@ export async function getProject(ctx: AuthContext, id: string) {
       checklists: {
         where: { deletedAt: null },
         orderBy: { createdAt: "desc" },
-        take: 8,
+        take: 16,
         include: { items: { orderBy: { sortOrder: "asc" } } },
       },
       media: {

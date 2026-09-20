@@ -4,7 +4,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Field, Input, Textarea } from "@/components/ui/Field";
+import { Field, Input, Select, Textarea } from "@/components/ui/Field";
+import { sortTrades } from "@/lib/trades";
+import { formatWalkthroughClock } from "@/lib/walkthrough";
+
+type ChecklistItemRow = {
+  id: string;
+  title: string;
+  isComplete: boolean;
+  trade?: string;
+  notes?: string;
+  timestampMs?: number | null;
+  screenshotUrl?: string | null;
+};
 
 export type TaskRow = {
   id: string;
@@ -67,8 +79,8 @@ export function TaskCreateForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-[12px] border border-[var(--line)] p-4">
-      <Field label="New task" error={error ?? undefined}>
+    <form onSubmit={onSubmit}>
+      <Field label="Title" error={error ?? undefined}>
         <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Photograph north elevation" />
       </Field>
       <Field label="Details">
@@ -76,33 +88,25 @@ export function TaskCreateForm({
       </Field>
       <div className="grid gap-3 sm:grid-cols-3">
         <Field label="Assignee">
-          <select
-            className="w-full rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5"
-            value={assigneeId}
-            onChange={(e) => setAssigneeId(e.target.value)}
-          >
+          <Select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
             <option value="">Unassigned</option>
             {members.map((member) => (
               <option key={member.id} value={member.id}>
                 {member.firstName} {member.lastName}
               </option>
             ))}
-          </select>
+          </Select>
         </Field>
         <Field label="Due">
           <Input type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
         </Field>
         <Field label="Priority">
-          <select
-            className="w-full rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5"
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-          >
+          <Select value={priority} onChange={(e) => setPriority(e.target.value)}>
             <option value="low">Low</option>
             <option value="normal">Normal</option>
             <option value="high">High</option>
             <option value="urgent">Urgent</option>
-          </select>
+          </Select>
         </Field>
       </div>
       <Button type="submit" disabled={pending || !title.trim()}>
@@ -140,7 +144,11 @@ export function TaskList({
             key={key}
             type="button"
             onClick={() => setFilter(key)}
-            className={`rounded-full border px-3 py-1 text-sm ${filter === key ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[var(--line)]"}`}
+            className={`rounded-xl px-3 py-2 text-sm font-semibold ${
+              filter === key
+                ? "bg-[var(--brand-subtle)] text-[var(--brand)]"
+                : "text-[var(--muted)] hover:bg-[#fafafa]"
+            }`}
           >
             {key === "open" ? "Active" : key === "completed" ? "Done" : "All"}
           </button>
@@ -149,9 +157,9 @@ export function TaskList({
       {visible.length === 0 ? (
         <p className="text-sm text-[var(--muted)]">No tasks in this view.</p>
       ) : (
-        <ul className="divide-y divide-[var(--line)]">
+        <ul>
           {visible.map((task) => (
-            <li key={task.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between">
+            <li key={task.id} className="flex flex-col gap-2 border-b border-[var(--line)] py-3 last:border-0 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <Link href={`/tasks/${task.id}`} className="font-medium">
                   {task.title}
@@ -169,7 +177,7 @@ export function TaskList({
                 ) : null}
               </div>
               {canComplete && task.status !== "completed" ? (
-                <Button variant="secondary" className="min-h-11" onClick={() => complete(task.id)}>
+                <Button variant="secondary" onClick={() => complete(task.id)}>
                   Complete
                 </Button>
               ) : (
@@ -194,7 +202,10 @@ export function ChecklistBoard({
   checklists: Array<{
     id: string;
     name: string;
-    items: Array<{ id: string; title: string; isComplete: boolean }>;
+    source?: string;
+    summary?: string;
+    sourceMediaUrl?: string | null;
+    items: ChecklistItemRow[];
   }>;
   templates: Array<{ id: string; name: string }>;
   canCreate: boolean;
@@ -229,17 +240,15 @@ export function ChecklistBoard({
     <div className="space-y-4">
       {canCreate && templates.length > 0 ? (
         <div className="flex flex-wrap gap-2">
-          <select
-            className="rounded-[10px] border border-[var(--line)] bg-white px-3 py-2.5"
-            value={templateId}
-            onChange={(e) => setTemplateId(e.target.value)}
-          >
+          <div className="min-w-48">
+            <Select value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
             {templates.map((template) => (
               <option key={template.id} value={template.id}>
                 {template.name}
               </option>
             ))}
-          </select>
+            </Select>
+          </div>
           <Button variant="secondary" disabled={pending} onClick={applyTemplate}>
             Add checklist
           </Button>
@@ -250,30 +259,67 @@ export function ChecklistBoard({
       ) : (
         checklists.map((list) => {
           const done = list.items.filter((i) => i.isComplete).length;
+          const hasTrade = list.items.some((item) => item.trade?.trim());
+          const grouped = hasTrade
+            ? sortTrades([...new Set(list.items.map((item) => item.trade?.trim() || "General"))]).map((trade) => ({
+                trade,
+                items: list.items.filter((item) => (item.trade?.trim() || "General") === trade),
+              }))
+            : [{ trade: null as string | null, items: list.items }];
           return (
-            <div key={list.id} className="rounded-[12px] border border-[var(--line)] p-4">
+            <div key={list.id} className="rounded-2xl border border-[var(--line)] bg-[#fafafa] p-4">
               <div className="mb-3 flex items-baseline justify-between gap-3">
-                <h3 className="font-medium">{list.name}</h3>
+                <h3 className="font-medium">
+                  {list.name}
+                  {list.source === "walkthrough" ? (
+                    <span className="ml-2 rounded-full bg-[#eef6f4] px-2 py-0.5 text-xs font-medium text-[var(--muted)]">Walkthrough</span>
+                  ) : null}
+                </h3>
                 <span className="text-sm text-[var(--muted)]">
                   {done}/{list.items.length}
                 </span>
               </div>
-              <ul className="space-y-2">
-                {list.items.map((item) => (
-                  <li key={item.id}>
-                    <label className="flex min-h-12 cursor-pointer items-center gap-3 text-sm">
-                      <input
-                        type="checkbox"
-                        className="h-5 w-5"
-                        checked={item.isComplete}
-                        disabled={!canComplete}
-                        onChange={(e) => toggle(item.id, e.target.checked)}
-                      />
-                      <span className={item.isComplete ? "text-[var(--muted)] line-through" : ""}>{item.title}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
+              {list.summary ? <p className="mb-3 text-sm text-[var(--muted)]">{list.summary}</p> : null}
+              {list.sourceMediaUrl ? (
+                <a href={list.sourceMediaUrl} className="mb-3 inline-block text-sm font-medium underline" target="_blank" rel="noreferrer">
+                  Play walkthrough video
+                </a>
+              ) : null}
+              {grouped.map((group) => (
+                <div key={group.trade ?? "all"} className="mb-3 last:mb-0">
+                  {group.trade ? <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">{group.trade}</h4> : null}
+                  <ul className="space-y-2">
+                    {group.items.map((item) => (
+                      <li key={item.id} className="rounded-xl bg-white p-2">
+                        <label className="flex min-h-12 cursor-pointer items-start gap-3 text-sm">
+                          <input
+                            type="checkbox"
+                            className="mt-1 h-5 w-5"
+                            checked={item.isComplete}
+                            disabled={!canComplete}
+                            onChange={(e) => toggle(item.id, e.target.checked)}
+                          />
+                          {item.screenshotUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.screenshotUrl}
+                              alt=""
+                              className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                            />
+                          ) : null}
+                          <span>
+                            <span className={item.isComplete ? "text-[var(--muted)] line-through" : ""}>{item.title}</span>
+                            {item.timestampMs != null ? (
+                              <span className="mt-1 block text-xs text-[var(--muted)]">{formatWalkthroughClock(item.timestampMs)}</span>
+                            ) : null}
+                            {item.notes ? <span className="mt-1 block text-xs text-[var(--muted)]">{item.notes}</span> : null}
+                          </span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           );
         })

@@ -63,6 +63,11 @@ export default async function FieldJobPage({ params }: { params: Promise<{ proje
         canRun={ctx.permissions.has("projects.edit") || ctx.role.key === "field_technician"}
         directions={directions}
       />
+      <Link href={`/field/${project.id}/walkthrough`} className="field-walk-cta">
+        <span className="field-walk-cta-kicker">Office checklist</span>
+        <span className="field-walk-cta-title">Video walkthrough</span>
+        <span className="field-walk-cta-hint">Record video + voice. AI builds a trade list with screenshots.</span>
+      </Link>
       <FieldMessage
         projectId={project.id}
         currentUserId={ctx.user.id}

@@ -17,4 +17,5 @@ export const NOTIFICATION_EVENTS = [
   { key: "task.assigned", label: "Task assignments" },
   { key: "project.note", label: "Job notes" },
   { key: "project.status", label: "Job started / completed" },
+  { key: "walkthrough.ready", label: "Walkthrough checklists" },
 ] as const;

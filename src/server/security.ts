@@ -11,7 +11,7 @@ export function securityHeaders(pathname = "/") {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(self), microphone=(), geolocation=(self), payment=()",
+    "Permissions-Policy": "camera=(self), microphone=(self), geolocation=(self), payment=()",
     "X-DNS-Prefetch-Control": "off",
     "Cross-Origin-Opener-Policy": "same-origin",
     "Content-Security-Policy": [
