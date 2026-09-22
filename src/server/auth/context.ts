@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/server/db";
 import { sha256 } from "@/server/crypto";
@@ -44,7 +45,7 @@ export async function readSessionToken(request?: Request) {
   return store.get(SESSION_COOKIE)?.value ?? null;
 }
 
-export async function loadAuthContext(request?: Request): Promise<AuthContext | null> {
+export const loadAuthContext = cache(async function loadAuthContext(request?: Request): Promise<AuthContext | null> {
   const token = await readSessionToken(request);
   if (!token) return null;
   const session = await prisma.session.findUnique({
@@ -110,7 +111,7 @@ export async function loadAuthContext(request?: Request): Promise<AuthContext | 
     role: { id: membership.role.id, key: membership.role.key, name: membership.role.name },
     permissions: new Set(membership.role.permissions.map((rp) => rp.permission.key)),
   };
-}
+});
 
 export async function requireAuth(): Promise<AuthContext> {
   const ctx = await loadAuthContext();

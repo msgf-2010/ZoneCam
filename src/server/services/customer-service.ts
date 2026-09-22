@@ -4,7 +4,6 @@ import type { AuthContext } from "@/server/auth/context";
 import { requirePermission } from "@/server/auth/context";
 import { AppError } from "@/server/http";
 import { writeAuditLog } from "@/server/audit";
-import { syncCompanyRbac } from "@/server/tenancy/provision";
 import { isAssignedOnlyRole, projectScopeWhere } from "@/server/tenancy/access";
 
 const optionalText = z.string().trim().max(200).optional().nullable();
@@ -40,7 +39,6 @@ function emptyToNull(value?: string | null) {
 
 export async function listCustomers(ctx: AuthContext, query?: string) {
   requirePermission(ctx, "customers.view");
-  await syncCompanyRbac(prisma, ctx.company.id);
   return prisma.customer.findMany({
     where: {
       companyId: ctx.company.id,

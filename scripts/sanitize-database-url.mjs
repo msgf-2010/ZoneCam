@@ -3,6 +3,9 @@ export function sanitizeDatabaseUrl(url) {
   if (!url) return url;
   let next = url.trim().replace(/^["']|["']$/g, "");
   next = next.replace(/[?&]channel_binding=[^&]*/gi, "");
+  if (next.includes("neon.tech") && !next.includes("-pooler.")) {
+    next = next.replace(/(@ep-[a-z0-9-]+)(\.)/i, "$1-pooler$2");
+  }
   if (next.includes("-pooler.") && !/[?&]pgbouncer=/i.test(next)) {
     next += next.includes("?") ? "&pgbouncer=true" : "?pgbouncer=true";
   }

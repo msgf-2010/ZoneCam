@@ -8,7 +8,6 @@ import { writeAuditLog } from "@/server/audit";
 import { recordTimeline } from "@/server/timeline";
 import { notifyUsers, projectAudienceUserIds } from "@/server/services/notification-service";
 import { canEditProject, canStartAssignedJob, loadScopedProject, projectScopeWhere } from "@/server/tenancy/access";
-import { syncCompanyRbac } from "@/server/tenancy/provision";
 import { signedMediaPath } from "@/server/adapters/storage";
 
 const optionalText = z.string().trim().max(200).optional().nullable();
@@ -124,7 +123,6 @@ export type ProjectListItem = Prisma.ProjectGetPayload<{ include: typeof project
 
 export async function listProjectMeta(ctx: AuthContext) {
   requirePermission(ctx, "projects.view");
-  await syncCompanyRbac(prisma, ctx.company.id);
   const [statuses, types, members] = await Promise.all([
     prisma.projectStatus.findMany({
       where: { companyId: ctx.company.id },
@@ -152,7 +150,6 @@ export async function listProjects(
   filters: { q?: string; statusKey?: string; today?: boolean } = {},
 ) {
   requirePermission(ctx, "projects.view");
-  await syncCompanyRbac(prisma, ctx.company.id);
   const where = projectScopeWhere(ctx);
   if (filters.q) {
     where.OR = [
@@ -598,7 +595,6 @@ export async function addProjectNote(ctx: AuthContext, projectId: string, body: 
 
 export async function getDashboard(ctx: AuthContext) {
   requirePermission(ctx, "projects.view");
-  await syncCompanyRbac(prisma, ctx.company.id);
   const where = projectScopeWhere(ctx);
   const start = new Date();
   start.setHours(0, 0, 0, 0);
