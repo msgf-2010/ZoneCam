@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 type Note = {
   id: string;
@@ -21,7 +20,6 @@ function hrefFor(item: Note) {
 }
 
 export function NotificationBell() {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(0);
   const [items, setItems] = useState<Note[]>([]);
@@ -37,23 +35,8 @@ export function NotificationBell() {
   useEffect(() => {
     void refresh();
     const poll = setInterval(() => void refresh(), 15000);
-    const source = new EventSource("/api/v1/realtime/stream");
-    source.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data) as { type?: string };
-        if (data.type && data.type !== "ping" && data.type !== "hello") {
-          void refresh();
-          router.refresh();
-        }
-      } catch {
-        /* ignore malformed frames */
-      }
-    };
-    return () => {
-      clearInterval(poll);
-      source.close();
-    };
-  }, [router]);
+    return () => clearInterval(poll);
+  }, []);
 
   return (
     <div className="relative">

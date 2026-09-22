@@ -72,13 +72,15 @@ export async function loadAuthContext(request?: Request): Promise<AuthContext | 
   if (!membership) return null;
 
   if (!rbacSynced.has(membership.companyId)) {
-    await syncCompanyRbac(prisma, membership.companyId);
     rbacSynced.add(membership.companyId);
-    const refreshed = await prisma.companyMembership.findUnique({
-      where: { id: membership.id },
-      include: membershipInclude,
-    });
-    if (refreshed) Object.assign(membership, refreshed);
+    if (membership.role.permissions.length === 0) {
+      await syncCompanyRbac(prisma, membership.companyId);
+      const refreshed = await prisma.companyMembership.findUnique({
+        where: { id: membership.id },
+        include: membershipInclude,
+      });
+      if (refreshed) Object.assign(membership, refreshed);
+    }
   }
 
   if (session.companyId !== membership.companyId) {
