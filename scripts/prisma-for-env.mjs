@@ -1,8 +1,11 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import path from "path";
 
+import { sanitizeDatabaseUrl } from "./sanitize-database-url.mjs";
+
 const schemaPath = path.join(process.cwd(), "prisma", "schema.prisma");
-const url = process.env.DATABASE_URL ?? "";
+const url = sanitizeDatabaseUrl(process.env.DATABASE_URL ?? "");
+if (url) process.env.DATABASE_URL = url;
 const provider = url.startsWith("postgres") ? "postgresql" : "sqlite";
 
 if (!existsSync(schemaPath)) {
