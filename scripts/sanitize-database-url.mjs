@@ -2,7 +2,10 @@
 export function sanitizeDatabaseUrl(url) {
   if (!url) return url;
   let next = url.trim().replace(/^["']|["']$/g, "");
-  next = next.replace(/[?&]channel_binding=require/gi, "");
+  next = next.replace(/[?&]channel_binding=[^&]*/gi, "");
+  if (next.includes("-pooler.") && !/[?&]pgbouncer=/i.test(next)) {
+    next += next.includes("?") ? "&pgbouncer=true" : "?pgbouncer=true";
+  }
   next = next.replace(/\?&/g, "?").replace(/[?&]$/g, "");
   return next;
 }

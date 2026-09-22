@@ -81,6 +81,11 @@ export function originAllowed(request: Request) {
     const incoming = new URL(origin);
     const app = new URL(appUrl);
     if (incoming.origin === app.origin) return true;
+    try {
+      if (incoming.origin === new URL(request.url).origin) return true;
+    } catch {
+      /* ignore invalid request URL */
+    }
     if (extraAllowedOrigins().includes(incoming.origin)) return true;
     const samePort = incoming.port === app.port || (!incoming.port && !app.port);
     const sameProtocol = incoming.protocol === app.protocol;

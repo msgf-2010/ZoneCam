@@ -69,26 +69,28 @@ export async function registerAccount(input: unknown, meta: { ip?: string | null
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) throw new AppError(409, "An account with that email already exists.");
 
-  const result = await prisma.$transaction(async (tx) => {
-    const user = await tx.user.create({
-      data: {
-        email,
-        passwordHash: await hashPassword(data.password),
-        firstName: data.firstName,
-        lastName: data.lastName,
-      },
-    });
-    const company = await tx.company.create({
+  const slug = await uniqueSlug(data.companyName);
+  const user = await prisma.user.create({
+    data: {
+      email,
+      passwordHash: await hashPassword(data.password),
+      firstName: data.firstName,
+      lastName: data.lastName,
+    },
+  });
+  let result: { user: typeof user; company: { id: string } };
+  try {
+    const company = await prisma.company.create({
       data: {
         name: data.companyName,
-        slug: await uniqueSlug(data.companyName),
+        slug,
       },
     });
-    await provisionCompanyDefaults(tx, company.id);
-    const ownerRole = await tx.role.findUniqueOrThrow({
+    await provisionCompanyDefaults(prisma, company.id);
+    const ownerRole = await prisma.role.findUniqueOrThrow({
       where: { companyId_key: { companyId: company.id, key: "owner" } },
     });
-    await tx.companyMembership.create({
+    await prisma.companyMembership.create({
       data: {
         companyId: company.id,
         userId: user.id,
@@ -96,8 +98,11 @@ export async function registerAccount(input: unknown, meta: { ip?: string | null
         status: "active",
       },
     });
-    return { user, company };
-  });
+    result = { user, company };
+  } catch (error) {
+    await prisma.user.delete({ where: { id: user.id } }).catch(() => undefined);
+    throw error;
+  }
 
   await sendVerification(result.user.id, result.user.email);
   const token = await createSession({

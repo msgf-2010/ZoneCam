@@ -105,10 +105,10 @@ export function RegisterForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-    const json = await res.json();
+    const payload = await res.json().catch(() => null);
     setPending(false);
     if (!res.ok) {
-      setError(json.error ?? "Could not create account.");
+      setError(payload?.error ?? "Could not create account. Try again after the latest deploy is Active.");
       return;
     }
     const fieldClient = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
