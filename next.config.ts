@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "80mb",
     },
+    // Dynamic pages are not reused by default, so every sidebar click waited
+    // on a full server render. Keep them reusable long enough to toggle tabs.
+    staleTimes: {
+      dynamic: 60,
+      static: 300,
+    },
   },
   async headers() {
     return [

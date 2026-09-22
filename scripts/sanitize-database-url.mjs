@@ -10,7 +10,7 @@ export function sanitizeDatabaseUrl(url) {
     next += next.includes("?") ? "&pgbouncer=true" : "?pgbouncer=true";
   }
   if (next.includes("neon.tech") && !/[?&]connection_limit=/i.test(next)) {
-    next += next.includes("?") ? "&connection_limit=5" : "?connection_limit=5";
+    next += next.includes("?") ? "&connection_limit=10" : "?connection_limit=10";
   }
   next = next.replace(/\?&/g, "?").replace(/[?&]$/g, "");
   return next;

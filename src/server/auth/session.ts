@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/server/db";
 import { randomToken, sha256 } from "@/server/crypto";
-import { SESSION_COOKIE, readSessionToken } from "@/server/auth/context";
+import { SESSION_COOKIE, forgetCachedAuth, readSessionToken } from "@/server/auth/context";
 
 export { readSessionToken };
 
@@ -46,6 +46,7 @@ export async function clearSessionCookie() {
 
 export async function destroySessionByToken(token: string | null) {
   if (!token) return;
+  forgetCachedAuth(token);
   await prisma.session.deleteMany({ where: { tokenHash: sha256(token) } });
   await clearSessionCookie();
 }

@@ -602,7 +602,7 @@ export async function getDashboard(ctx: AuthContext) {
   end.setDate(end.getDate() + 1);
   const now = new Date();
 
-  const [active, today, attention, recent] = await Promise.all([
+  const [active, today, attention, recent, memberCount, recentAudit] = await Promise.all([
     prisma.project.count({
       where: { ...where, projectStatus: { isTerminal: false } },
     }),
@@ -628,9 +628,6 @@ export async function getDashboard(ctx: AuthContext) {
       orderBy: { updatedAt: "desc" },
       take: 8,
     }) as Promise<ProjectListItem[]>,
-  ]);
-
-  const [memberCount, recentAudit] = await Promise.all([
     prisma.companyMembership.count({
       where: { companyId: ctx.company.id, status: "active", deletedAt: null },
     }),

@@ -56,6 +56,7 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 onClick={onNavigate}
                 className={cn(
                   "mb-0.5 block rounded-xl px-3 py-2.5 text-sm font-semibold",

@@ -9,6 +9,16 @@ import { syncCompanyRbac } from "@/server/tenancy/provision";
 export const SESSION_COOKIE = "zonecam_session";
 
 const rbacSynced = new Set<string>();
+const AUTH_CACHE_MS = 20_000;
+const authCache = new Map<string, { expires: number; ctx: AuthContext }>();
+const authInflight = new Map<string, Promise<AuthContext | null>>();
+
+export function forgetCachedAuth(token: string | null) {
+  if (!token) return;
+  const key = sha256(token);
+  authCache.delete(key);
+  authInflight.delete(key);
+}
 
 const membershipInclude = {
   company: true,
@@ -45,31 +55,58 @@ export async function readSessionToken(request?: Request) {
   return store.get(SESSION_COOKIE)?.value ?? null;
 }
 
-export const loadAuthContext = cache(async function loadAuthContext(request?: Request): Promise<AuthContext | null> {
-  const token = await readSessionToken(request);
-  if (!token) return null;
+function toAuthContext(
+  session: { id: string; user: { id: string; email: string; firstName: string; lastName: string; phone: string | null; emailVerifiedAt: Date | null } },
+  membership: {
+    id: string;
+    company: { id: string; name: string; slug: string; timezone: string };
+    role: { id: string; key: string; name: string; permissions: { permission: { key: string } }[] };
+  },
+): AuthContext {
+  return {
+    user: {
+      id: session.user.id,
+      email: session.user.email,
+      firstName: session.user.firstName,
+      lastName: session.user.lastName,
+      phone: session.user.phone,
+      emailVerifiedAt: session.user.emailVerifiedAt,
+    },
+    sessionId: session.id,
+    company: {
+      id: membership.company.id,
+      name: membership.company.name,
+      slug: membership.company.slug,
+      timezone: membership.company.timezone,
+    },
+    membershipId: membership.id,
+    role: { id: membership.role.id, key: membership.role.key, name: membership.role.name },
+    permissions: new Set(membership.role.permissions.map((rp) => rp.permission.key)),
+  };
+}
+
+async function queryAuthContext(token: string): Promise<AuthContext | null> {
   const session = await prisma.session.findUnique({
     where: { tokenHash: sha256(token) },
     include: {
-      user: true,
+      user: {
+        include: {
+          memberships: {
+            where: { status: "active", deletedAt: null, company: { deletedAt: null } },
+            include: membershipInclude,
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      },
     },
   });
   if (!session || session.expiresAt < new Date() || session.user.deletedAt) {
     return null;
   }
 
-  const membership = await prisma.companyMembership.findFirst({
-    where: {
-      userId: session.userId,
-      status: "active",
-      deletedAt: null,
-      company: { deletedAt: null },
-      ...(session.companyId ? { companyId: session.companyId } : {}),
-    },
-    include: membershipInclude,
-    orderBy: { createdAt: "asc" },
-  });
-
+  const membership = session.companyId
+    ? session.user.memberships.find((item) => item.companyId === session.companyId)
+    : session.user.memberships[0];
   if (!membership) return null;
 
   if (!rbacSynced.has(membership.companyId)) {
@@ -91,26 +128,31 @@ export const loadAuthContext = cache(async function loadAuthContext(request?: Re
     });
   }
 
-  return {
-    user: {
-      id: session.user.id,
-      email: session.user.email,
-      firstName: session.user.firstName,
-      lastName: session.user.lastName,
-      phone: session.user.phone,
-      emailVerifiedAt: session.user.emailVerifiedAt,
-    },
-    sessionId: session.id,
-    company: {
-      id: membership.company.id,
-      name: membership.company.name,
-      slug: membership.company.slug,
-      timezone: membership.company.timezone,
-    },
-    membershipId: membership.id,
-    role: { id: membership.role.id, key: membership.role.key, name: membership.role.name },
-    permissions: new Set(membership.role.permissions.map((rp) => rp.permission.key)),
-  };
+  return toAuthContext(session, membership);
+}
+
+export const loadAuthContext = cache(async function loadAuthContext(request?: Request): Promise<AuthContext | null> {
+  const token = await readSessionToken(request);
+  if (!token) return null;
+  const key = sha256(token);
+  const hit = authCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.ctx;
+
+  const pending = authInflight.get(key);
+  if (pending) return pending;
+
+  const next = queryAuthContext(token)
+    .then((ctx) => {
+      if (ctx && authInflight.get(key) === next) {
+        authCache.set(key, { ctx, expires: Date.now() + AUTH_CACHE_MS });
+      }
+      return ctx;
+    })
+    .finally(() => {
+      if (authInflight.get(key) === next) authInflight.delete(key);
+    });
+  authInflight.set(key, next);
+  return next;
 });
 
 export async function requireAuth(): Promise<AuthContext> {
