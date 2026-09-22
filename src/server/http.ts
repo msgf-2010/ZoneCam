@@ -73,6 +73,15 @@ function isPrivateHostname(hostname: string) {
   return false;
 }
 
+function forwardedPublicOrigin(request: Request) {
+  const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "")
+    .split(",")[0]
+    .trim();
+  if (!host) return null;
+  const proto = (request.headers.get("x-forwarded-proto") ?? "https").split(",")[0].trim();
+  return `${proto}://${host}`;
+}
+
 export function originAllowed(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return true;
@@ -81,6 +90,8 @@ export function originAllowed(request: Request) {
     const incoming = new URL(origin);
     const app = new URL(appUrl);
     if (incoming.origin === app.origin) return true;
+    const forwarded = forwardedPublicOrigin(request);
+    if (forwarded && incoming.origin === forwarded) return true;
     try {
       if (incoming.origin === new URL(request.url).origin) return true;
     } catch {

@@ -47,13 +47,13 @@ export function LoginForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-    const json = await res.json();
+    const json = await res.json().catch(() => null);
     setPending(false);
     if (!res.ok) {
-      setError(json.error ?? "Login failed.");
+      setError(json?.error ?? "Login failed.");
       return;
     }
-    const role = json.data?.role?.key;
+    const role = json?.data?.role?.key;
     const fieldClient = role === "field_technician" || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
     const next = safeInternalPath(search.get("next"), fieldClient ? "/field" : "/dashboard");
     router.push(next);

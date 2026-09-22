@@ -67,6 +67,21 @@ describe("originAllowed", () => {
     expect(originAllowed(request)).toBe(false);
     process.env.APP_URL = prev;
   });
+
+  it("allows the Railway public host even when APP_URL is still localhost", () => {
+    const prev = process.env.APP_URL;
+    process.env.APP_URL = app;
+    const request = new Request("http://localhost:3001/api/v1/auth/login", {
+      method: "POST",
+      headers: {
+        origin: "https://zonecam-production.up.railway.app",
+        "x-forwarded-host": "zonecam-production.up.railway.app",
+        "x-forwarded-proto": "https",
+      },
+    });
+    expect(originAllowed(request)).toBe(true);
+    process.env.APP_URL = prev;
+  });
 });
 
 describe("rateLimit", () => {
