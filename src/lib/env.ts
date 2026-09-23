@@ -34,6 +34,12 @@ const schema = z.object({
 
 export type AppEnv = z.infer<typeof schema>;
 
+/** Public company signup. Closed unless OPEN_REGISTRATION is exactly true. Never enable this on the production server. */
+export function openRegistrationEnabled() {
+  const flag = process.env.OPEN_REGISTRATION?.trim().toLowerCase();
+  return flag === "true" || flag === "1";
+}
+
 export function getEnv(): AppEnv {
   const parsed = schema.safeParse(process.env);
   if (!parsed.success) {

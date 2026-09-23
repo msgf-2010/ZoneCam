@@ -581,16 +581,6 @@ body {
   border-radius: 12px;
 }
 
-.office-only {
-  display: inline;
-}
-
-@media (max-width: 800px) {
-  .office-only {
-    display: none;
-  }
-}
-
 @media (min-width: 900px) {
   .field-root {
     max-width: 480px;

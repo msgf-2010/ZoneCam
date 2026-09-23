@@ -30,7 +30,7 @@ function AuthFrame({
   );
 }
 
-export function LoginForm() {
+export function LoginForm({ allowRegistration = false }: { allowRegistration?: boolean }) {
   const router = useRouter();
   const search = useSearchParams();
   const [email, setEmail] = useState("");
@@ -53,15 +53,21 @@ export function LoginForm() {
       setError(json?.error ?? "Login failed.");
       return;
     }
-    const role = json?.data?.role?.key;
-    const fieldClient = role === "field_technician" || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    const next = safeInternalPath(search.get("next"), fieldClient ? "/field" : "/dashboard");
+    const requested = safeInternalPath(search.get("next"), "/dashboard");
+    const next = requested === "/field" || requested.startsWith("/field/") ? "/dashboard" : requested;
     router.push(next);
     router.refresh();
   }
 
   return (
-    <AuthFrame title="Sign in" subtitle="Field crews document the job. The office sees it instantly.">
+    <AuthFrame
+      title="Sign in"
+      subtitle={
+        allowRegistration
+          ? "Field crews document the job. The office sees it instantly."
+          : "Sign in with the account your company invited. There is no public signup."
+      }
+    >
       <form onSubmit={onSubmit}>
         <Field label="Email">
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
@@ -73,12 +79,9 @@ export function LoginForm() {
           {pending ? "Signing in…" : "Sign in"}
         </Button>
       </form>
-      <div className="mt-4 flex justify-between text-sm text-[var(--muted)]">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-sm text-[var(--muted)]">
         <Link href="/forgot-password">Forgot password</Link>
-        <Link href="/login?next=/field">Field portal</Link>
-        <Link href="/register" className="office-only">
-          Create company
-        </Link>
+        {allowRegistration ? <Link href="/register">Create company</Link> : <span>Ask your company admin for an invite.</span>}
       </div>
     </AuthFrame>
   );
@@ -111,8 +114,7 @@ export function RegisterForm() {
       setError(payload?.error ?? "Could not create account. Try again after the latest deploy is Active.");
       return;
     }
-    const fieldClient = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    router.push(fieldClient ? "/field" : "/dashboard");
+    router.push("/dashboard");
     router.refresh();
   }
 

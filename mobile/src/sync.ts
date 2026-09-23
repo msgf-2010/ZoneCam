@@ -40,6 +40,8 @@ async function uploadRow(row: QueueRow) {
           longitude: row.longitude,
           clientUploadId: row.clientUploadId,
           deviceInfo: "zonecam-mobile",
+          category: row.category,
+          description: row.description,
         },
       ]),
     );

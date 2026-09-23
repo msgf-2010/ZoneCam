@@ -1,23 +1,7 @@
 import * as SQLite from "expo-sqlite";
+import type { QueueRow } from "./queue-types";
 
-export type QueueStatus = "pending" | "uploading" | "uploaded" | "failed" | "retrying";
-
-export type QueueRow = {
-  id: string;
-  projectId: string;
-  localUri: string;
-  filename: string;
-  mimeType: string;
-  sizeBytes: number;
-  capturedAt: string;
-  latitude: number | null;
-  longitude: number | null;
-  clientUploadId: string;
-  status: QueueStatus;
-  attempts: number;
-  lastError: string | null;
-  serverMediaId: string | null;
-};
+export type { QueueRow, QueueStatus } from "./queue-types";
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -42,6 +26,8 @@ export async function getDb() {
         serverMediaId TEXT
       );
     `);
+    await db.execAsync(`ALTER TABLE upload_queue ADD COLUMN category TEXT`).catch(() => undefined);
+    await db.execAsync(`ALTER TABLE upload_queue ADD COLUMN description TEXT`).catch(() => undefined);
   }
   return db;
 }
@@ -50,8 +36,8 @@ export async function enqueueCapture(row: QueueRow) {
   const database = await getDb();
   await database.runAsync(
     `INSERT OR IGNORE INTO upload_queue
-      (id, projectId, localUri, filename, mimeType, sizeBytes, capturedAt, latitude, longitude, clientUploadId, status, attempts, lastError, serverMediaId)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, projectId, localUri, filename, mimeType, sizeBytes, capturedAt, latitude, longitude, clientUploadId, status, attempts, lastError, serverMediaId, category, description)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       row.id,
       row.projectId,
@@ -67,6 +53,8 @@ export async function enqueueCapture(row: QueueRow) {
       row.attempts,
       row.lastError,
       row.serverMediaId,
+      row.category,
+      row.description,
     ],
   );
 }

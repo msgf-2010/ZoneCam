@@ -1,4 +1,4 @@
-import { clientIp, errorResponse, originAllowed, AppError } from "@/server/http";
+import { clientIp, errorResponse, originAllowed, withCors, AppError } from "@/server/http";
 import { loadAuthContext, type AuthContext } from "@/server/auth/context";
 import { applySecurityHeaders } from "@/server/security";
 
@@ -24,8 +24,8 @@ export async function handleApi(
       ctx,
       ip: clientIp(request) ?? undefined,
     });
-    return applySecurityHeaders(response, new URL(request.url).pathname);
+    return applySecurityHeaders(withCors(response, request), new URL(request.url).pathname);
   } catch (error) {
-    return applySecurityHeaders(errorResponse(error), new URL(request.url).pathname);
+    return applySecurityHeaders(withCors(errorResponse(error), request), new URL(request.url).pathname);
   }
 }

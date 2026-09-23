@@ -7,7 +7,7 @@ import { provisionCompanyDefaults } from "@/server/tenancy/provision";
 import { writeAuditLog } from "@/server/audit";
 import { AppError } from "@/server/http";
 import { createEmailService } from "@/server/adapters/email";
-import { getEnv } from "@/lib/env";
+import { getEnv, openRegistrationEnabled } from "@/lib/env";
 import { loadAuthContext, serializeAuth } from "@/server/auth/context";
 
 const registerSchema = z.object({
@@ -64,6 +64,9 @@ async function sendVerification(userId: string, email: string) {
 }
 
 export async function registerAccount(input: unknown, meta: { ip?: string | null; userAgent?: string | null }) {
+  if (!openRegistrationEnabled()) {
+    throw new AppError(403, "ZoneCam accounts are invitation only. Ask your company to invite you.");
+  }
   const data = registerSchema.parse(input);
   const email = data.email.toLowerCase();
   const existing = await prisma.user.findUnique({ where: { email } });

@@ -6,6 +6,7 @@
     "strict": true,
     "skipLibCheck": true,
     "moduleResolution": "bundler",
+    "moduleSuffixes": [".ios", ".android", ".native", ".web", ""],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "types": [

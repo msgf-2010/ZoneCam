@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { securityHeaders, safeInternalPath } from "@/server/security";
+import { originAllowed } from "@/server/http";
 
 const PUBLIC_PREFIXES = [
   "/login",
@@ -19,30 +20,20 @@ const PUBLIC_PREFIXES = [
   "/api/v1/health",
 ];
 
-const OFFICE_PREFIXES = [
-  "/dashboard",
-  "/projects",
-  "/customers",
-  "/calendar",
-  "/tasks",
-  "/reports",
-  "/payments",
-  "/team",
-  "/messages",
-  "/integrations",
-  "/settings",
-  "/search",
-];
-
-function isFieldClient(request: NextRequest) {
-  const ua = request.headers.get("user-agent") ?? "";
-  return /Android|iPhone|iPad|iPod|Mobile|webOS|IEMobile/i.test(ua);
-}
-
 function withHeaders(response: NextResponse, pathname: string) {
   for (const [key, value] of Object.entries(securityHeaders(pathname))) {
     response.headers.set(key, value);
   }
+  return response;
+}
+
+function withCors(response: NextResponse, request: NextRequest) {
+  const origin = request.headers.get("origin");
+  if (!origin || !request.nextUrl.pathname.startsWith("/api/") || !originAllowed(request)) return response;
+  response.headers.set("Access-Control-Allow-Origin", origin);
+  response.headers.set("Vary", "Origin");
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   return response;
 }
 
@@ -51,6 +42,10 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith("/_next") || pathname.startsWith("/favicon")) {
     return NextResponse.next();
   }
+  if (pathname.startsWith("/api/") && request.method === "OPTIONS") {
+    const response = originAllowed(request) ? new NextResponse(null, { status: 204 }) : new NextResponse(null, { status: 403 });
+    return withCors(withHeaders(response, pathname), request);
+  }
   if (pathname.includes(".") && !pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
@@ -58,6 +53,13 @@ export function middleware(request: NextRequest) {
   const isPublic =
     pathname === "/" ||
     PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+
+  if (pathname === "/field" || pathname.startsWith("/field/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    url.search = "";
+    return withHeaders(NextResponse.redirect(url), "/dashboard");
+  }
 
   const session = request.cookies.get("zonecam_session")?.value;
   if (!isPublic && !pathname.startsWith("/api/") && !session) {
@@ -69,17 +71,11 @@ export function middleware(request: NextRequest) {
   }
   if (session && (pathname === "/login" || pathname === "/register" || pathname === "/")) {
     const url = request.nextUrl.clone();
-    url.pathname = isFieldClient(request) ? "/field" : "/dashboard";
+    url.pathname = "/dashboard";
     url.search = "";
     return withHeaders(NextResponse.redirect(url), url.pathname);
   }
-  if (session && isFieldClient(request) && OFFICE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/field";
-    url.search = "";
-    return withHeaders(NextResponse.redirect(url), "/field");
-  }
-  return withHeaders(NextResponse.next(), pathname);
+  return withCors(withHeaders(NextResponse.next(), pathname), request);
 }
 
 export const config = {

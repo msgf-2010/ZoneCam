@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --port 3001",
+    "dev": "next dev --turbopack --hostname 0.0.0.0 --port 3001",
     "build": "node scripts/prisma-for-env.mjs && prisma generate && next build",
     "start": "node scripts/start.mjs",
     "lint": "eslint .",

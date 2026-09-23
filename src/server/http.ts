@@ -14,6 +14,21 @@ export function json(data: unknown, status = 200, init?: { headers?: HeadersInit
   return Response.json(data, { status, headers: init?.headers });
 }
 
+export function withCors(response: Response, request: Request) {
+  const origin = request.headers.get("origin");
+  if (!origin || !originAllowed(request)) return response;
+  const headers = new Headers(response.headers);
+  headers.set("Access-Control-Allow-Origin", origin);
+  headers.set("Vary", "Origin");
+  headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
+  headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export function errorResponse(error: unknown) {
   if (error instanceof AppError) {
     const headers: HeadersInit | undefined =
@@ -98,6 +113,13 @@ export function originAllowed(request: Request) {
       /* ignore invalid request URL */
     }
     if (extraAllowedOrigins().includes(incoming.origin)) return true;
+    if (
+      process.env.NODE_ENV !== "production" &&
+      loopbackHosts().has(incoming.hostname) &&
+      incoming.protocol === app.protocol
+    ) {
+      return true;
+    }
     const samePort = incoming.port === app.port || (!incoming.port && !app.port);
     const sameProtocol = incoming.protocol === app.protocol;
     if (!samePort || !sameProtocol) return false;

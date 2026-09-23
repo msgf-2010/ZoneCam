@@ -1,6 +1,6 @@
 import { handleApi } from "@/server/api";
 import { json, AppError, readJson } from "@/server/http";
-import { createProject, listProjects } from "@/server/services/project-service";
+import { createProject, listFieldJobs, listProjects } from "@/server/services/project-service";
 
 export async function GET(request: Request) {
   return handleApi(
@@ -8,6 +8,9 @@ export async function GET(request: Request) {
     async ({ ctx, request: req }) => {
       if (!ctx) throw new AppError(401, "Not authenticated.");
       const params = new URL(req.url).searchParams;
+      if (params.get("field") === "1") {
+        return json({ data: await listFieldJobs(ctx) });
+      }
       return json({
         data: await listProjects(ctx, {
           q: params.get("q") ?? undefined,

@@ -15,7 +15,6 @@ const NAV_GROUPS = [
       { href: "/projects", label: "Projects" },
       { href: "/calendar", label: "Calendar" },
       { href: "/tasks", label: "Tasks" },
-      { href: "/field", label: "Field" },
     ],
   },
   {
