@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "ZoneCam Field",
+    "owner": "goldbit",
     "slug": "zonecam-field",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -13,14 +14,21 @@
       "infoPlist": {
         "NSCameraUsageDescription": "ZoneCam uses the camera to document job sites.",
         "NSMicrophoneUsageDescription": "ZoneCam uses the microphone when recording job-site video.",
+        "NSSpeechRecognitionUsageDescription": "ZoneCam turns what you say during a walkthrough into a checklist for the office.",
         "NSLocationWhenInUseUsageDescription": "ZoneCam can attach the job location to a photo when you allow it. Location is not tracked continuously."
       }
     },
     "android": {
+      "package": "com.zonecam.field",
+      "versionCode": 3,
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "plugins": [
@@ -34,7 +42,24 @@
         }
       ],
       "expo-asset",
-      "expo-font"
-    ]
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.25",
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "buildToolsVersion": "36.0.0"
+          }
+        }
+      ],
+      "expo-speech-recognition"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "01c57331-153c-46f0-ab03-8468e01b6d06"
+      }
+    }
   }
 }

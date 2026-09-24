@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import type { Palette } from "./theme";
 
 export function useStyles(colors: Palette) {
@@ -11,7 +11,7 @@ function createStyles(colors: Palette) {
     safe: { flex: 1, backgroundColor: colors.bg },
     flex: { flex: 1, backgroundColor: "#000" },
     center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg },
-    pad: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 36, gap: 10 },
+    pad: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: Platform.OS === "android" ? 108 : 36, gap: 10 },
     topRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
     topCopy: { flex: 1, gap: 2 },
     topActions: { alignItems: "flex-end", gap: 8 },
@@ -149,7 +149,7 @@ function createStyles(colors: Palette) {
       alignItems: "center",
       paddingHorizontal: 28,
       paddingTop: 18,
-      paddingBottom: 28,
+      paddingBottom: Platform.OS === "android" ? 72 : 28,
       backgroundColor: "rgba(3,16,22,0.72)",
     },
     cameraSide: { minWidth: 64, minHeight: 48, alignItems: "center", justifyContent: "center" },
@@ -220,5 +220,19 @@ function createStyles(colors: Palette) {
     msgThem: { marginRight: 28, backgroundColor: colors.elevated, borderColor: colors.line, borderWidth: 1, borderRadius: 14, padding: 12, gap: 4 },
     msgWho: { fontSize: 12, fontWeight: "700" },
     actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    lineCard: {
+      flexDirection: "row",
+      gap: 10,
+      alignItems: "center",
+      backgroundColor: colors.elevated,
+      borderColor: colors.line,
+      borderWidth: 1,
+      borderRadius: 14,
+      padding: 10,
+    },
+    lineText: { flex: 1, color: colors.ink, fontSize: 15, lineHeight: 21 },
+    previewBackdrop: { flex: 1, backgroundColor: "#000" },
+    previewImage: { flex: 1, width: "100%" },
+    previewClose: { paddingHorizontal: 20, paddingTop: 48, paddingBottom: 12 },
   });
 }

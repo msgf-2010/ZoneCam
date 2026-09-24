@@ -1,14 +1,14 @@
 import { Linking, Pressable, Text, View } from "react-native";
 
-export function VideoTile({ uri }: { id: string; uri: string }) {
+export function VideoTile({ uri, size = 64 }: { id: string; uri: string; size?: number }) {
   return (
     <Pressable
       onPress={() => void Linking.openURL(uri)}
       accessibilityRole="button"
       accessibilityLabel="Play video"
       style={{
-        width: 168,
-        height: 112,
+        width: size,
+        height: size,
         borderRadius: 12,
         backgroundColor: "#10262c",
         alignItems: "center",

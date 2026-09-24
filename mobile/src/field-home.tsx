@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BackHandler, Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { BackHandler, Image, Linking, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { api, getApiBase } from "./api";
 import { CaptureScreen } from "./capture";
 import { VideoTile } from "./clip";
@@ -12,9 +12,18 @@ import { useStyles } from "./styles";
 type Place =
   | { name: "jobs" }
   | { name: "job"; id: string }
+  | { name: "messages"; id: string }
   | { name: "category"; id: string; category: string }
   | { name: "camera"; id: string; number: string; jobName: string; category: string; note: string }
   | { name: "walk"; id: string };
+
+type JobMessage = {
+  id: string;
+  body: string;
+  createdAt: string;
+  authorId?: string | null;
+  author?: { firstName: string; lastName: string } | null;
+};
 
 export function FieldHome({ session, onLogout }: { session: FieldSession; onLogout: () => void }) {
   const [place, setPlace] = useState<Place>({ name: "jobs" });
@@ -25,7 +34,7 @@ export function FieldHome({ session, onLogout }: { session: FieldSession; onLogo
         setPlace({ name: "category", id: place.id, category: place.category });
         return true;
       }
-      if (place.name === "walk" || place.name === "category") {
+      if (place.name === "walk" || place.name === "category" || place.name === "messages") {
         setPlace({ name: "job", id: place.id });
         return true;
       }
@@ -71,6 +80,9 @@ export function FieldHome({ session, onLogout }: { session: FieldSession; onLogo
       />
     );
   }
+  if (place.name === "messages") {
+    return <MessagesScreen session={session} projectId={place.id} onBack={() => setPlace({ name: "job", id: place.id })} />;
+  }
   if (place.name === "job") {
     return (
       <JobScreen
@@ -79,19 +91,41 @@ export function FieldHome({ session, onLogout }: { session: FieldSession; onLogo
         onBack={() => setPlace({ name: "jobs" })}
         onCategory={(category) => setPlace({ name: "category", id: place.id, category })}
         onWalk={() => setPlace({ name: "walk", id: place.id })}
+        onMessages={() => setPlace({ name: "messages", id: place.id })}
       />
     );
   }
   return <JobsScreen session={session} onLogout={onLogout} onOpen={(id) => setPlace({ name: "job", id })} />;
 }
 
+function MediaPreview({ uri, onClose }: { uri: string; onClose: () => void }) {
+  const styles = useStyles(useTheme().colors);
+  return (
+    <Modal visible animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <View style={styles.previewBackdrop}>
+        <Pressable onPress={onClose} style={styles.previewClose} hitSlop={12}>
+          <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>Close</Text>
+        </Pressable>
+        <Image source={{ uri }} style={styles.previewImage} resizeMode="contain" />
+      </View>
+    </Modal>
+  );
+}
+
 function LocalShot({ row }: { row: QueueRow }) {
-  const { colors } = useTheme();
-  const styles = useStyles(colors);
+  const styles = useStyles(useTheme().colors);
+  const [open, setOpen] = useState(false);
   if (row.mimeType.startsWith("video")) {
     return <VideoTile id={row.id} uri={row.localUri} />;
   }
-  return <Image source={{ uri: row.localUri }} style={styles.thumb} />;
+  return (
+    <>
+      <Pressable onPress={() => setOpen(true)} accessibilityLabel="Preview photo">
+        <Image source={{ uri: row.localUri }} style={styles.thumb} />
+      </Pressable>
+      {open ? <MediaPreview uri={row.localUri} onClose={() => setOpen(false)} /> : null}
+    </>
+  );
 }
 
 function ServerShot({
@@ -101,13 +135,22 @@ function ServerShot({
   item: { id: string; type?: string; urls?: { thumbnail?: string; original?: string } };
   base: string;
 }) {
-  const { colors } = useTheme();
-  const styles = useStyles(colors);
+  const styles = useStyles(useTheme().colors);
+  const [open, setOpen] = useState(false);
   if (item.type === "video" && item.urls?.original) {
     return <VideoTile id={item.id} uri={absoluteUrl(base, item.urls.original)} />;
   }
-  if (!item.urls?.thumbnail) return null;
-  return <Image source={{ uri: absoluteUrl(base, item.urls.thumbnail) }} style={styles.thumb} />;
+  const thumb = item.urls?.thumbnail ? absoluteUrl(base, item.urls.thumbnail) : "";
+  const full = item.urls?.original ? absoluteUrl(base, item.urls.original) : thumb;
+  if (!thumb) return null;
+  return (
+    <>
+      <Pressable onPress={() => setOpen(true)} accessibilityLabel="Preview photo">
+        <Image source={{ uri: thumb }} style={styles.thumb} />
+      </Pressable>
+      {open ? <MediaPreview uri={full} onClose={() => setOpen(false)} /> : null}
+    </>
+  );
 }
 
 function ThemeSwitch() {
@@ -294,20 +337,21 @@ function JobScreen({
   onBack,
   onCategory,
   onWalk,
+  onMessages,
 }: {
   session: FieldSession;
   projectId: string;
   onBack: () => void;
   onCategory: (category: string) => void;
   onWalk: () => void;
+  onMessages: () => void;
 }) {
   const { colors } = useTheme();
   const styles = useStyles(colors);
   const [job, setJob] = useState<FieldJob | null>(null);
   const [base, setBase] = useState("");
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const [messages, setMessages] = useState<Array<{ id: string; body: string; createdAt: string; authorId?: string | null; author?: { firstName: string; lastName: string } | null }>>([]);
-  const [draft, setDraft] = useState("");
+  const [messages, setMessages] = useState<JobMessage[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [photos, setPhotos] = useState<Array<{ id: string; type?: string; urls?: { thumbnail?: string; original?: string } }>>([]);
@@ -362,25 +406,6 @@ function JobScreen({
     }
   }
 
-  async function sendMessage() {
-    setPending(true);
-    setStatus(null);
-    try {
-      const json = await api(`/api/v1/projects/${projectId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: draft }),
-      });
-      setMessages((current) => [...current, json.data]);
-      setDraft("");
-      setStatus("Sent.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Could not send.");
-    } finally {
-      setPending(false);
-    }
-  }
-
   return (
     <ScrollView contentContainerStyle={styles.pad}>
       <View style={styles.topRow}>
@@ -412,11 +437,6 @@ function JobScreen({
             <Text style={styles.secondaryText}>Navigate</Text>
           </Pressable>
         ) : null}
-        {canRun && !terminal && statusKey !== "in_progress" ? (
-          <Pressable style={({ pressed }) => [styles.button, pressed && styles.pressed]} disabled={pending} onPress={() => void post(`/api/v1/projects/${projectId}/start`)}>
-            <Text style={styles.buttonText}>Start job</Text>
-          </Pressable>
-        ) : null}
         {canRun && !terminal ? (
           <Pressable style={({ pressed }) => [styles.secondary, pressed && styles.pressed]} disabled={pending} onPress={() => void post(`/api/v1/projects/${projectId}/complete`)}>
             <Text style={styles.secondaryText}>Complete job</Text>
@@ -428,8 +448,88 @@ function JobScreen({
         <Text style={styles.cardTitle}>Video walkthrough</Text>
         <Text style={styles.muted}>Record video and notes. The office gets a trade list.</Text>
       </Pressable>
-      <Text style={styles.section}>Job messages</Text>
-      {messages.length === 0 ? <Text style={styles.empty}>No messages yet. The office will see anything you send here.</Text> : null}
+      <Pressable style={({ pressed }) => [styles.walkCard, pressed && styles.pressed]} onPress={onMessages}>
+        <Text style={styles.section}>Job messages</Text>
+        {messages.length === 0 ? <Text style={styles.empty}>No messages yet. Notes you send, and replies from the office, show up here.</Text> : null}
+        {messages.slice(-2).map((row) => {
+          const mine = row.authorId === session.user.id;
+          return (
+            <View key={row.id} style={mine ? styles.msgMine : styles.msgThem}>
+              <Text style={[styles.msgWho, { color: mine ? colors.primaryInk : colors.ink }]}>
+                {mine ? "You" : row.author ? `${row.author.firstName} ${row.author.lastName}` : "Office"}
+              </Text>
+              <Text style={{ color: mine ? colors.primaryInk : colors.ink }} numberOfLines={2}>
+                {row.body}
+              </Text>
+            </View>
+          );
+        })}
+        <Text style={styles.link}>{messages.length > 0 ? "Open messages" : "Message the office"}</Text>
+      </Pressable>
+      {status ? <Text style={styles.help}>{status}</Text> : null}
+      <Text style={styles.section}>What are you documenting?</Text>
+      <View style={styles.catGrid}>
+        {FIELD_PHOTO_CATEGORIES.map((category) => (
+          <Pressable key={category.key} style={({ pressed }) => [styles.catCard, pressed && styles.pressed]} onPress={() => onCategory(category.key)}>
+            <View style={[styles.catDot, { backgroundColor: category.tone }]} />
+            <Text style={styles.catName}>{category.name}</Text>
+            <Text style={styles.catHint}>{category.hint}</Text>
+            <Text style={styles.catCount}>{counts[category.key] ?? 0}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+
+function MessagesScreen({ session, projectId, onBack }: { session: FieldSession; projectId: string; onBack: () => void }) {
+  const { colors } = useTheme();
+  const styles = useStyles(colors);
+  const [messages, setMessages] = useState<JobMessage[]>([]);
+  const [draft, setDraft] = useState("");
+  const [status, setStatus] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function refresh() {
+    const json = await api(`/api/v1/projects/${projectId}/comments`);
+    setMessages(json.data ?? []);
+  }
+
+  useEffect(() => {
+    refresh().catch(() => setStatus("Could not load messages."));
+    const timer = setInterval(() => {
+      void refresh().catch(() => undefined);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [projectId]);
+
+  async function sendMessage() {
+    setPending(true);
+    setStatus(null);
+    try {
+      const json = await api(`/api/v1/projects/${projectId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: draft }),
+      });
+      setMessages((current) => [...current, json.data]);
+      setDraft("");
+      setStatus("Sent.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not send.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
+      <Pressable onPress={onBack} hitSlop={8}>
+        <Text style={styles.link}>‹ Job</Text>
+      </Pressable>
+      <Text style={styles.title}>Messages</Text>
+      <Text style={styles.help}>Anything you send goes to the office. Replies from the office show up on this phone.</Text>
+      {messages.length === 0 ? <Text style={styles.empty}>No messages yet.</Text> : null}
       {messages.map((row) => {
         const mine = row.authorId === session.user.id;
         return (
@@ -458,17 +558,6 @@ function JobScreen({
         <Text style={styles.secondaryText}>{pending ? "Sending…" : "Send to office"}</Text>
       </Pressable>
       {status ? <Text style={styles.help}>{status}</Text> : null}
-      <Text style={styles.section}>What are you documenting?</Text>
-      <View style={styles.catGrid}>
-        {FIELD_PHOTO_CATEGORIES.map((category) => (
-          <Pressable key={category.key} style={({ pressed }) => [styles.catCard, pressed && styles.pressed]} onPress={() => onCategory(category.key)}>
-            <View style={[styles.catDot, { backgroundColor: category.tone }]} />
-            <Text style={styles.catName}>{category.name}</Text>
-            <Text style={styles.catHint}>{category.hint}</Text>
-            <Text style={styles.catCount}>{counts[category.key] ?? 0}</Text>
-          </Pressable>
-        ))}
-      </View>
     </ScrollView>
   );
 }

@@ -49,7 +49,7 @@ async function grabFrame(id: string, uri: string) {
   return copied.exists ? cached : shotUri;
 }
 
-export function VideoTile({ id, uri }: { id: string; uri: string }) {
+export function VideoTile({ id, uri, size = 64 }: { id: string; uri: string; size?: number }) {
   const [poster, setPoster] = useState<string | null>(posters.get(id) ?? null);
   const [open, setOpen] = useState(false);
 
@@ -67,7 +67,7 @@ export function VideoTile({ id, uri }: { id: string; uri: string }) {
 
   return (
     <>
-      <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel="Play video" style={tile.card}>
+      <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel="Play video" style={[tile.card, { width: size, height: size }]}>
         {poster ? <Image source={{ uri: poster }} style={tile.fill} /> : <View style={tile.fill} />}
         <View style={tile.play} pointerEvents="none">
           <View style={tile.badge}>

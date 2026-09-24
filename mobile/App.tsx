@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, Pressable, SafeAreaView, StatusBar as NativeStatusBar, ScrollView, Text, TextInput, View } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { api, clearToken, getApiBase, getToken, setApiBase, setToken } from "./src/api";
 import { flushQueue } from "./src/sync";
@@ -187,34 +188,7 @@ function LoginScreen({ onLoggedIn }: { onLoggedIn: (session: FieldSession) => vo
 }
 
 function EyeIcon({ open, color }: { open: boolean; color: string }) {
-  return (
-    <View style={{ width: 22, height: 16, alignItems: "center", justifyContent: "center" }}>
-      <View
-        style={{
-          width: 20,
-          height: 12,
-          borderRadius: 8,
-          borderWidth: 1.5,
-          borderColor: color,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: color }} />
-      </View>
-      {open ? null : (
-        <View
-          style={{
-            position: "absolute",
-            width: 22,
-            height: 1.5,
-            backgroundColor: color,
-            transform: [{ rotate: "-35deg" }],
-          }}
-        />
-      )}
-    </View>
-  );
+  return <MaterialCommunityIcons name={open ? "eye-outline" : "eye-off-outline"} size={24} color={color} />;
 }
 
 function ThemeToggle() {
