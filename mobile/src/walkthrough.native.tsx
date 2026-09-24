@@ -294,13 +294,18 @@ export function WalkthroughScreen({ projectId, onClose }: { projectId: string; o
         if (row.shotUri) {
           form.append("screenshots", { uri: row.shotUri, name: `walkthrough-${screenshotIndex}.jpg`, type: "image/jpeg" } as unknown as Blob);
         }
-        return { startMs: row.startMs, endMs: row.endMs, text: row.text.trim(), screenshotIndex };
+        return {
+          startMs: Math.round(row.startMs),
+          endMs: Math.round(row.endMs),
+          text: row.text.trim(),
+          screenshotIndex,
+        };
       });
       form.append(
         "transcript",
         JSON.stringify({
           text: segments.map((row) => row.text).join(" ").trim(),
-          durationMs,
+          durationMs: Math.round(durationMs),
           segments,
         }),
       );
@@ -356,8 +361,9 @@ export function WalkthroughScreen({ projectId, onClose }: { projectId: string; o
 
   return (
     <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
-      <Pressable onPress={onClose} hitSlop={8}>
-        <Text style={styles.link}>‹ Job</Text>
+      <Pressable onPress={onClose} delayPressIn={0} hitSlop={8} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
+        <Text style={styles.pillIcon}>←</Text>
+        <Text style={styles.pillAccent}>Job</Text>
       </Pressable>
       <Text style={styles.kicker}>Office checklist</Text>
       <Text style={styles.title}>Video walkthrough</Text>

@@ -196,6 +196,22 @@ export async function uploadProjectMedia(
         description: file.description?.trim() ?? "",
       },
     });
+    if (kind === "photo") {
+      try {
+        const thumb = await makeJpegThumbnail(file.buffer);
+        const thumbKey = smallThumbKey(storageKey);
+        await storage.put({ key: thumbKey, body: thumb, contentType: "image/jpeg" });
+        await prisma.media.update({
+          where: { id: row.id },
+          data: { thumbnailKey: thumbKey, previewKey: thumbKey, processingStatus: "ready" },
+        });
+        row.thumbnailKey = thumbKey;
+        row.previewKey = thumbKey;
+        row.processingStatus = "ready";
+      } catch {
+        /* the original still displays if a thumbnail cannot be made */
+      }
+    }
     created.push(row);
     if (file.category?.trim()) {
       const tag = await prisma.mediaTag.upsert({

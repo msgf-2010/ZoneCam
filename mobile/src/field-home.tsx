@@ -4,6 +4,7 @@ import { api, getApiBase } from "./api";
 import { CaptureScreen } from "./capture";
 import { VideoTile } from "./clip";
 import { listQueue, type QueueRow } from "./queue";
+import { flushQueue } from "./sync";
 import { WalkthroughScreen } from "./walkthrough";
 import { FIELD_PHOTO_CATEGORIES, absoluteUrl, directionsUrl, jobAddress, type FieldJob, type FieldSession } from "./field";
 import { useTheme } from "./theme";
@@ -153,13 +154,24 @@ function ServerShot({
   );
 }
 
+function BackLink({ label, onPress }: { label: string; onPress: () => void }) {
+  const styles = useStyles(useTheme().colors);
+  return (
+    <Pressable onPress={onPress} delayPressIn={0} hitSlop={8} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
+      <Text style={styles.pillIcon}>←</Text>
+      <Text style={styles.pillAccent}>{label}</Text>
+    </Pressable>
+  );
+}
+
 function ThemeSwitch() {
   const { name, colors, setName } = useTheme();
   const styles = useStyles(colors);
   const next = name === "dark" ? "light" : "dark";
   return (
-    <Pressable onPress={() => setName(next)} hitSlop={8} style={({ pressed }) => [styles.themeToggle, pressed && styles.pressed]}>
-      <Text style={styles.themeToggleText}>{next === "light" ? "Light" : "Dark"}</Text>
+    <Pressable onPress={() => setName(next)} delayPressIn={0} hitSlop={8} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
+      <Text style={styles.pillIcon}>{name === "dark" ? "☾" : "☀"}</Text>
+      <Text style={styles.pillText}>{name === "dark" ? "Dark" : "Light"}</Text>
     </Pressable>
   );
 }
@@ -301,7 +313,7 @@ function JobCard({ job, base, onOpen }: { job: FieldJob; base: string; onOpen: (
   const address = jobAddress(job);
   const thumbs = job.thumbs ?? [];
   return (
-    <Pressable style={({ pressed }) => [styles.card, pressed && styles.pressed]} onPress={() => onOpen(job.id)}>
+    <Pressable delayPressIn={0} style={({ pressed }) => [styles.card, pressed && styles.pressed]} onPress={() => onOpen(job.id)}>
       {thumbs.length > 0 ? (
         <View style={styles.photoRow}>
           {thumbs.map((thumb) => (
@@ -357,7 +369,8 @@ function JobScreen({
   const [photos, setPhotos] = useState<Array<{ id: string; type?: string; urls?: { thumbnail?: string; original?: string } }>>([]);
   const [localShots, setLocalShots] = useState<QueueRow[]>([]);
 
-  async function refresh() {
+  async function refresh(upload = false) {
+    if (upload) await flushQueue().catch(() => undefined);
     const [projectJson, commentsJson, mediaJson, apiBase, queued] = await Promise.all([
       api(`/api/v1/projects/${projectId}`),
       api(`/api/v1/projects/${projectId}/comments`),
@@ -371,17 +384,20 @@ function JobScreen({
     setPhotos((mediaJson.data?.items ?? []).filter((item: { id: string }) => !known.has(item.id)));
     setLocalShots(queued);
     setBase(apiBase);
-    const tagged = await Promise.all(
-      FIELD_PHOTO_CATEGORIES.map(async (category) => {
-        const json = await api(`/api/v1/projects/${projectId}/media?tag=${encodeURIComponent(category.key)}`);
-        return [category.key, (json.data?.items ?? []).length] as const;
-      }),
-    );
-    setCounts(Object.fromEntries(tagged));
+    const nextCounts: Record<string, number> = {};
+    for (const item of mediaJson.data?.items ?? []) {
+      for (const tag of item.tags ?? []) {
+        if (tag?.name) nextCounts[tag.name] = (nextCounts[tag.name] ?? 0) + 1;
+      }
+    }
+    for (const row of queued) {
+      if (row.category) nextCounts[row.category] = (nextCounts[row.category] ?? 0) + 1;
+    }
+    setCounts(nextCounts);
   }
 
   useEffect(() => {
-    refresh().catch(() => setStatus("Could not load this job."));
+    refresh(true).catch(() => setStatus("Could not load this job."));
     const timer = setInterval(() => {
       void refresh().catch(() => undefined);
     }, 12000);
@@ -409,9 +425,7 @@ function JobScreen({
   return (
     <ScrollView contentContainerStyle={styles.pad}>
       <View style={styles.topRow}>
-        <Pressable onPress={onBack} hitSlop={8}>
-          <Text style={styles.link}>‹ Your jobs</Text>
-        </Pressable>
+        <BackLink label="Your jobs" onPress={onBack} />
         <ThemeSwitch />
       </View>
       <Text style={styles.title}>{job?.name ?? "Job"}</Text>
@@ -433,8 +447,9 @@ function JobScreen({
       )}
       <View style={styles.actions}>
         {maps ? (
-          <Pressable style={({ pressed }) => [styles.secondary, pressed && styles.pressed]} onPress={() => void Linking.openURL(maps)}>
-            <Text style={styles.secondaryText}>Navigate</Text>
+          <Pressable delayPressIn={0} style={({ pressed }) => [styles.pill, pressed && styles.pressed]} onPress={() => void Linking.openURL(maps)}>
+            <Text style={styles.pillIcon}>⌖</Text>
+            <Text style={styles.pillText}>Navigate</Text>
           </Pressable>
         ) : null}
         {canRun && !terminal ? (
@@ -443,12 +458,12 @@ function JobScreen({
           </Pressable>
         ) : null}
       </View>
-      <Pressable style={({ pressed }) => [styles.walkCard, pressed && styles.pressed]} onPress={onWalk}>
+      <Pressable delayPressIn={0} style={({ pressed }) => [styles.walkCard, pressed && styles.pressed]} onPress={onWalk}>
         <Text style={styles.kicker}>Office checklist</Text>
         <Text style={styles.cardTitle}>Video walkthrough</Text>
         <Text style={styles.muted}>Record video and notes. The office gets a trade list.</Text>
       </Pressable>
-      <Pressable style={({ pressed }) => [styles.walkCard, pressed && styles.pressed]} onPress={onMessages}>
+      <Pressable delayPressIn={0} style={({ pressed }) => [styles.walkCard, pressed && styles.pressed]} onPress={onMessages}>
         <Text style={styles.section}>Job messages</Text>
         {messages.length === 0 ? <Text style={styles.empty}>No messages yet. Notes you send, and replies from the office, show up here.</Text> : null}
         {messages.slice(-2).map((row) => {
@@ -464,13 +479,16 @@ function JobScreen({
             </View>
           );
         })}
-        <Text style={styles.link}>{messages.length > 0 ? "Open messages" : "Message the office"}</Text>
+        <View style={styles.inlineLink}>
+          <Text style={styles.pillIcon}>💬</Text>
+          <Text style={styles.pillAccent}>{messages.length > 0 ? "Open messages" : "Message the office"}</Text>
+        </View>
       </Pressable>
       {status ? <Text style={styles.help}>{status}</Text> : null}
       <Text style={styles.section}>What are you documenting?</Text>
       <View style={styles.catGrid}>
         {FIELD_PHOTO_CATEGORIES.map((category) => (
-          <Pressable key={category.key} style={({ pressed }) => [styles.catCard, pressed && styles.pressed]} onPress={() => onCategory(category.key)}>
+          <Pressable key={category.key} delayPressIn={0} style={({ pressed }) => [styles.catCard, pressed && styles.pressed]} onPress={() => onCategory(category.key)}>
             <View style={[styles.catDot, { backgroundColor: category.tone }]} />
             <Text style={styles.catName}>{category.name}</Text>
             <Text style={styles.catHint}>{category.hint}</Text>
@@ -524,9 +542,7 @@ function MessagesScreen({ session, projectId, onBack }: { session: FieldSession;
 
   return (
     <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
-      <Pressable onPress={onBack} hitSlop={8}>
-        <Text style={styles.link}>‹ Job</Text>
-      </Pressable>
+      <BackLink label="Job" onPress={onBack} />
       <Text style={styles.title}>Messages</Text>
       <Text style={styles.help}>Anything you send goes to the office. Replies from the office show up on this phone.</Text>
       {messages.length === 0 ? <Text style={styles.empty}>No messages yet.</Text> : null}
@@ -586,6 +602,7 @@ function CategoryScreen({
   const [pending, setPending] = useState(false);
 
   async function refresh() {
+    await flushQueue().catch(() => undefined);
     const [projectJson, mediaJson, apiBase, queued] = await Promise.all([
       api(`/api/v1/projects/${projectId}`),
       api(`/api/v1/projects/${projectId}/media?tag=${encodeURIComponent(category)}`),
@@ -623,9 +640,7 @@ function CategoryScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.pad}>
-      <Pressable onPress={onBack} hitSlop={8}>
-        <Text style={styles.link}>‹ Job</Text>
-      </Pressable>
+      <BackLink label="Job" onPress={onBack} />
       <Text style={styles.title}>{meta?.name ?? category}</Text>
       <Text style={styles.help}>{meta?.hint}</Text>
       <Pressable

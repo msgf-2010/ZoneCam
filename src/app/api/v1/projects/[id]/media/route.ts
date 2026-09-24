@@ -4,6 +4,17 @@ import { listProjectMedia, uploadProjectMedia } from "@/server/services/media-se
 
 type Params = { params: Promise<{ id: string }> };
 
+function mimeFromName(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".heic")) return "image/heic";
+  if (lower.endsWith(".mp4")) return "video/mp4";
+  if (lower.endsWith(".mov")) return "video/quicktime";
+  if (lower.endsWith(".webm")) return "video/webm";
+  return "image/jpeg";
+}
+
 export const runtime = "nodejs";
 
 export async function GET(request: Request, { params }: Params) {
@@ -33,8 +44,19 @@ export async function POST(request: Request, { params }: Params) {
     request,
     async ({ ctx, request: req, ip }) => {
       if (!ctx) throw new AppError(401, "Not authenticated.");
-      const form = await req.formData();
-      const blobs = form.getAll("files").filter((item): item is File => item instanceof File);
+      let form: FormData;
+      try {
+        form = await req.formData();
+      } catch {
+        throw new AppError(400, "The photo did not arrive complete. Take it again.");
+      }
+      const blobs = form.getAll("files").flatMap((item) => {
+        if (typeof item === "string" || item.size <= 0) return [];
+        if (item instanceof File) return [item];
+        const blob = item as Blob;
+        const name = "name" in blob && typeof blob.name === "string" ? blob.name : "upload.bin";
+        return [new File([blob], name, { type: blob.type || "application/octet-stream" })];
+      });
       const metaRaw = form.get("metadata");
       const metadata = typeof metaRaw === "string" ? (JSON.parse(metaRaw) as Array<Record<string, unknown>>) : [];
       const sharedCapture = form.get("capturedAt");
@@ -45,8 +67,8 @@ export async function POST(request: Request, { params }: Params) {
           const extra = metadata[index] ?? {};
           return {
             buffer: Buffer.from(await file.arrayBuffer()),
-            filename: file.name || `upload-${index}`,
-            mimeType: file.type || "application/octet-stream",
+            filename: file.name || `upload-${index}.jpg`,
+            mimeType: file.type && file.type !== "application/octet-stream" ? file.type : mimeFromName(file.name),
             capturedAt: String(extra.capturedAt ?? sharedCapture ?? "") || null,
             latitude: extra.latitude != null ? Number(extra.latitude) : sharedLat ? Number(sharedLat) : null,
             longitude: extra.longitude != null ? Number(extra.longitude) : sharedLng ? Number(sharedLng) : null,

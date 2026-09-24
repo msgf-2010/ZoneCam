@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "80mb",
     },
+    // Middleware clones every request body. The default 10 MB cap was
+    // truncating phone videos and photos, which surfaced as a 500.
+    middlewareClientMaxBodySize: "80mb",
     // Dynamic pages are not reused by default, so every sidebar click waited
     // on a full server render. Keep them reusable long enough to toggle tabs.
     staleTimes: {

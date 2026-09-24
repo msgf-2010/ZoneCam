@@ -90,14 +90,22 @@ export async function createProjectWalkthrough(
 
   const type = await prisma.projectType.findFirst({ where: { id: project.projectTypeId ?? "" } });
   const ai = createAiService();
-  const generated = await ai.generateWalkthroughChecklist({
-    jobName: project.name,
-    jobType: type?.name,
-    durationMs: transcript.durationMs,
-    transcript: transcript.text,
-    segments: transcript.segments,
-    screenshotCount: screenshots.length,
-  });
+  let generated: { summary: string; items: Array<{ title: string; trade: string; notes: string; timestampMs: number; screenshotIndex: number | null }> };
+  try {
+    generated = await ai.generateWalkthroughChecklist({
+      jobName: project.name,
+      jobType: type?.name,
+      durationMs: transcript.durationMs,
+      transcript: transcript.text,
+      segments: transcript.segments,
+      screenshotCount: screenshots.length,
+    });
+  } catch {
+    generated = {
+      summary: "Walkthrough video saved.",
+      items: [],
+    };
+  }
 
   const checklist = await prisma.checklist.create({
     data: {
@@ -114,7 +122,7 @@ export async function createProjectWalkthrough(
           sortOrder,
           trade: item.trade.slice(0, 40),
           notes: item.notes.slice(0, 1000),
-          timestampMs: item.timestampMs,
+          timestampMs: Math.round(item.timestampMs),
           screenshotMediaId:
             item.screenshotIndex != null && screenshots[item.screenshotIndex]
               ? screenshots[item.screenshotIndex].id

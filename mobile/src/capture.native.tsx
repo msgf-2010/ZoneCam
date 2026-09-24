@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as FileSystem from "expo-file-system";
 import * as Location from "expo-location";
-import { enqueueCapture } from "./queue";
+import { enqueueCapture, listQueue } from "./queue";
 import { flushQueue } from "./sync";
 import { runningOnEmulator } from "./device";
 import { useTheme } from "./theme";
@@ -48,6 +48,7 @@ export function CaptureScreen({
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<"back" | "front">("back");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function storePhoto(uri: string) {
     const where = await readLocation();
@@ -78,17 +79,23 @@ export function CaptureScreen({
       description: description ?? null,
     });
     await flushQueue();
+    const queued = await listQueue(project.id);
+    const row = queued.find((item) => item.clientUploadId === clientUploadId);
+    if (row?.status === "failed") {
+      throw new Error(row.lastError || "The photo did not reach the office.");
+    }
   }
 
   async function snap() {
     if (saving) return;
     setSaving(true);
+    setError(null);
     try {
-      const photo = await camera.current?.takePictureAsync({ quality: 0.7 });
+      const photo = await camera.current?.takePictureAsync({ quality: 0.55 });
       if (!photo?.uri) return;
       await storePhoto(photo.uri);
-    } catch {
-      return;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The photo did not reach the office.");
     } finally {
       setSaving(false);
     }
@@ -113,6 +120,11 @@ export function CaptureScreen({
   return (
     <View style={styles.flex}>
       <CameraView ref={camera} style={styles.flex} facing={facing} />
+      {error ? (
+        <View style={styles.cameraNotice}>
+          <Text style={styles.cameraText}>{error}</Text>
+        </View>
+      ) : null}
       <View style={styles.cameraBar}>
         <Pressable onPress={onClose} hitSlop={12} style={styles.cameraSide}>
           <Text style={styles.cameraText}>Done</Text>
